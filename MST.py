@@ -1,5 +1,4 @@
 import Graph
-import Tree
 import UnionFind
 
 class MST:

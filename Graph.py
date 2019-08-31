@@ -100,6 +100,24 @@ class Graph:
 
         return traverse(s)
 
+    def SSlongestPathDAG(self, s):
+        self.verifyDAG(s)
+
+        # Initialize all longest paths to -inf, if by the end any longest path is still -inf then it is unreachable from s
+        longestPaths = {s:0}  # maps vertex u -> LD(s, u) for all vertices u, where LD -> longest distance
+        for v in self.vertices:
+            if v != s:
+                longestPaths[v] = -float('inf')
+
+        sortedVertices = Topological_Sort.topological_sort_SS(self, s)
+        for u in sortedVertices:
+            if u in self.edges.keys():
+                for e in self.edges[u]:
+                    v, w = e.v, e.w
+                    # Do the opposite of relaxing the edge - if d[v] < d[u] + w, then set d[v] to d[u] + w
+                    longestPaths[v] = max(longestPaths[v], longestPaths[u] + w)
+        return longestPaths
+
 
 class Vertex:
     # Assume that a Vertex is immutable
@@ -180,4 +198,5 @@ if __name__ == "__main__":
     except AssertionError:
         print("successfully detected graph g2 was not a DAG")
 
+    print("Longest path dict: ", g.SSlongestPathDAG(a))
 

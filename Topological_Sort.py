@@ -14,8 +14,9 @@ def topological_sort(graph):
                   must also contain all vertices present in the keys of the adjacency set
     :return: list of graph vertices in topologically sorted order
     """
-    result, visited, unvisited = [], set(), set(graph.keys())
-    while nodes_left_to_traverse(graph.keys(), visited):
+    assert graph.verifyDAG()
+    result, visited, unvisited = [], set(), graph.getVertices()
+    while nodes_left_to_traverse(graph.getVertices(), visited):
         add_children_of(graph, next(iter(unvisited)), result, visited, unvisited)
     return result
 

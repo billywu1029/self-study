@@ -1,3 +1,5 @@
+from Graph import *
+
 """
 Topological Sort:
 Use DFS subroutine to get a topological sorted order of vertices, ie for each edge (u,v), u comes before v in the
@@ -14,11 +16,11 @@ def topological_sort(graph):
                   must also contain all vertices present in the keys of the adjacency set
     :return: list of graph vertices in topologically sorted order
     """
-    assert graph.verifyDAG()
-    result, visited, unvisited = [], set(), graph.getVertices()
-    while nodes_left_to_traverse(graph.getVertices(), visited):
+    result, visited = [], set()
+    unvisited = [Vertex(v.val) for v in graph.getVertices()]  # Deep copy
+    while nodes_left_to_traverse(graph.getVertices(), visited) and unvisited:
         add_children_of(graph, next(iter(unvisited)), result, visited, unvisited)
-    return result
+    return [v.val for v in result]
 
 def add_children_of(graph, root, result, visited, unvisited=None):
     """
@@ -62,9 +64,86 @@ def topological_sort_SS(graph, source):
     add_children_of(graph, source, result, visited)
     return result
 
+def SSlongestPathDAG(g, s):
+    g.verifyDAG(s)
+
+    # Initialize all longest paths to -inf, if by the end any longest path is still -inf then it is unreachable from s
+    longestPaths = {s:0}  # maps vertex u -> LD(s, u) for all vertices u, where LD -> longest distance
+    for v in g.vertices:
+        if v != s:
+            longestPaths[v] = -float('inf')
+
+    sortedVertices = topological_sort_SS(g, s)
+    for u in sortedVertices:
+        if u in g.edges.keys():
+            for e in g.edges[u]:
+                v, w = e.v, e.w
+                # Do the opposite of relaxing the edge - if d[v] < d[u] + w, then set d[v] to d[u] + w
+                longestPaths[v] = max(longestPaths[v], longestPaths[u] + w)
+    return longestPaths
+
+def SSSPTopologicalRelaxation(g, s):
+    """
+    Finds the single source shortest paths between the source s and all other vertices
+    The graph must be a DAG for the algorithm to produce the correct SSSP
+    :return: mapping of vertex pairs to their shortest path weight
+    """
+    g.verifyDAG(s)
+    shortestPaths = {s:0}  # maps vertex u -> d(s, u) for all vertices u
+    for v in g.vertices:
+        if v != s:
+            shortestPaths[v] = float('inf')
+
+    # list of graph's vertices reachable from s in topological order
+    verticesSorted = topological_sort_SS(g, s)
+    for u in verticesSorted:
+        if u in g.edges.keys():
+            for e in g.edges[u]:
+                v, w = e.v, e.w
+                g.relax(u, v, w, shortestPaths)
+    return shortestPaths
+
 
 if __name__ == '__main__':
-    g = {0: {1,2,3}, 1:{2}, 2: {3, 4}, 3:{}, 4:{}}
-    g2 = {0: {5}, 1:{3,0}, 2: {4}, 3:{2}, 4:{}, 5:{}}
-    print(topological_sort(g2))
+    ezGraph = Graph()
+    ezGraph.addEdge(0, 5)
+    ezGraph.addEdge(1, 3)
+    ezGraph.addEdge(1, 0)
+    ezGraph.addEdge(2, 4)
+    ezGraph.addEdge(3, 2)
+
+    # {0: {5}, 1:{3,0}, 2: {4}, 3:{2}, 4:{}, 5:{}}
+    print(topological_sort(ezGraph))
+
+    a, b, c, d, e = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e")
+    g = Graph()
+    g.addEdge(a, b, 1)
+    g.addEdge(a, c, -1)
+    g.addEdge(b, d, 4)
+    g.addEdge(b, c, 2)
+    g.addEdge(c, d, 5)
+    g.addEdge(c, d, 5)
+    g.addEdge(a, e, 10)
+    g.addEdge(e, d, -7)
+
+    print("Edges: ", g.getEdges())
+    try:
+        print(SSSPTopologicalRelaxation(g, a))
+        print("successfully determined that graph g was a DAG")
+    except AssertionError:
+        print("wasn't supposed to fail...")
+
+    g2 = Graph()
+    g2.addEdge(a, b, 1)
+    g2.addEdge(a, c, -1)
+    g2.addEdge(d, a, 4)
+    g2.addEdge(c, d, 5)
+
+    try:
+        print(SSSPTopologicalRelaxation(g2, a))
+    except AssertionError:
+        print("successfully detected graph g2 was not a DAG")
+
+    print("Longest path dict: ", SSlongestPathDAG(g, a))
+
 

@@ -1,5 +1,3 @@
-import Topological_Sort
-
 class Graph:
     def __init__(self, vertices=None, edges=None, weights=None):
         self.vertices = set() if vertices is None else vertices
@@ -14,8 +12,13 @@ class Graph:
     def getEdges(self):
         return self.edges
 
+    def getWeights(self):
+        return self.weights
+
     def getChildren(self, u):
-        assert u in self.vertices
+        assert isinstance(u, Vertex) and u in self.vertices
+        # Can instead yield from a generator for better performance, since there could be a lot of children -
+        # Keep the list for now so that debugging/readability is easier
         if u in self.edges:
             return [e.v for e in self.edges[u]]
         else:
@@ -26,6 +29,14 @@ class Graph:
         return self.getChildren(item)
 
     def addEdge(self, u, v, w=0):  # Unweighted edges by default
+        # Lazy way of making graph creation easier by specifying numbers in addEdge()
+        # (instead of wrapping every number x with Vertex(x))
+        if not isinstance(u, Vertex):
+            u = Vertex(u)
+        if not isinstance(v, Vertex):
+            v = Vertex(v)
+        # Adds edge (u, v) with weight w to the Graph
+        # Undefined behavior if we call addEdge(u, v, w) if there is already edge (u,v)
         if u in self.edges.keys():
             self.edges[u].add(Edge(u, v, w))
         else:
@@ -40,27 +51,6 @@ class Graph:
 
     def addVertex(self, x):
         self.vertices.add(Vertex(x))
-
-    def SSSPTopologicalRelaxation(self, s):
-        """
-        Finds the single source shortest paths between the source s and all other vertices
-        The graph must be a DAG for the algorithm to produce the correct SSSP
-        :return: mapping of vertex pairs to their shortest path weight
-        """
-        self.verifyDAG(s)
-        shortestPaths = {s:0}  # maps vertex u -> d(s, u) for all vertices u
-        for v in self.vertices:
-            if v != s:
-                shortestPaths[v] = float('inf')
-
-        # list of graph's vertices reachable from s in topological order
-        verticesSorted = Topological_Sort.topological_sort_SS(self, s)
-        for u in verticesSorted:
-            if u in self.edges.keys():
-                for e in self.edges[u]:
-                    v, w = e.v, e.w
-                    self.relax(u, v, w, shortestPaths)
-        return shortestPaths
 
     def relax(self, u, v, w, d):
         """
@@ -100,25 +90,6 @@ class Graph:
 
         return traverse(s)
 
-    def SSlongestPathDAG(self, s):
-        self.verifyDAG(s)
-
-        # Initialize all longest paths to -inf, if by the end any longest path is still -inf then it is unreachable from s
-        longestPaths = {s:0}  # maps vertex u -> LD(s, u) for all vertices u, where LD -> longest distance
-        for v in self.vertices:
-            if v != s:
-                longestPaths[v] = -float('inf')
-
-        sortedVertices = Topological_Sort.topological_sort_SS(self, s)
-        for u in sortedVertices:
-            if u in self.edges.keys():
-                for e in self.edges[u]:
-                    v, w = e.v, e.w
-                    # Do the opposite of relaxing the edge - if d[v] < d[u] + w, then set d[v] to d[u] + w
-                    longestPaths[v] = max(longestPaths[v], longestPaths[u] + w)
-        return longestPaths
-
-
 class Vertex:
     # Assume that a Vertex is immutable
     def __init__(self, x):
@@ -136,6 +107,9 @@ class Vertex:
 
     def __hash__(self):
         return hash(self.val)
+
+    def __eq__(self, other):
+        return isinstance(other, Vertex) and other.val == self.val
 
 
 class Edge:
@@ -169,34 +143,4 @@ class Edge:
             return False
 
 if __name__ == "__main__":
-    a, b, c, d, e = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e")
-    g = Graph({a, b, c, d})
-    g.addEdge(a, b, 1)
-    g.addEdge(a, c, -1)
-    g.addEdge(b, d, 4)
-    g.addEdge(b, c, 2)
-    g.addEdge(c, d, 5)
-    g.addEdge(c, d, 5)
-    g.addEdge(a, e, 10)
-    g.addEdge(e, d, -7)
-
-    print("Edges: ", g.getEdges())
-    try:
-        print(g.SSSPTopologicalRelaxation(a))
-        print("successfully determined that graph g was a DAG")
-    except AssertionError:
-        print("wasn't supposed to fail...")
-
-    g2 = Graph({a, b, c, d})
-    g2.addEdge(a, b, 1)
-    g2.addEdge(a, c, -1)
-    g2.addEdge(d, a, 4)
-    g2.addEdge(c, d, 5)
-
-    try:
-        print(g2.SSSPTopologicalRelaxation(a))
-    except AssertionError:
-        print("successfully detected graph g2 was not a DAG")
-
-    print("Longest path dict: ", g.SSlongestPathDAG(a))
-
+    pass

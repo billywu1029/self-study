@@ -31,21 +31,21 @@ class MST:
             result.add(e.copy())
         return result
 
+if __name__ == "__main__":
+    G = Graph.Graph()
+    for i in range(1, 5):
+        G.addVertex(i)
+    count = 0
+    for u in G.getVertices():
+        for v in G.getVertices():
+            if u != v:
+                G.addEdge(u, v, count)
+                count += 1
+    print([str(v) for v in G.getVertices()])
+    print(G.getEdges().items())
 
-G = Graph.Graph()
-for i in range(1, 5):
-    G.addVertex(i)
-count = 0
-for u in G.getVertices():
-    for v in G.getVertices():
-        if u != v:
-            G.addEdge(u, v, count)
-            count += 1
-print([str(v) for v in G.getVertices()])
-print(G.getEdges().items())
-
-M = MST(G)
-print([str(e) for e in M.get_MST_Edges()])
+    M = MST(G)
+    print([str(e) for e in M.get_MST_Edges()])
 
 
 

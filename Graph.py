@@ -1,7 +1,7 @@
 class Graph:
-    def __init__(self, adjSet=None, vertices=None, edges=None, weights=None):
+    def __init__(self, vertices=None, edges=None, weights=None, adjSet=None):
         # Can construct a graph via adj set (vertices mapped to set of vertices that are connected via directed edges)
-        # For ease of use, the vertices are assumed to not be be of type Graph.Vertex(x), also assumed unweighted edges
+        # For ease of use, the vertices are assumed to not be be of type Graph.Vertex(x)
         self.vertices = set() if vertices is None else vertices
         # Adjacency set for all the edges, maps Vertex objects to sets of Edge objects
         self.edges = {} if edges is None else edges
@@ -9,8 +9,12 @@ class Graph:
         self.weights = {} if weights is None else weights
         if adjSet is not None:
             for u in adjSet:
-                for v in adjSet[u]:
-                    self.addEdge(u, v)
+                if isinstance(adjSet[u], set):  # Unweighted edges, truly an "adjacency set"
+                    for v in adjSet[u]:
+                        self.addEdge(u, v)
+                elif isinstance(adjSet[u], dict):  # Weighted, adjSet[u][v] = w_{u,v}
+                    for v in adjSet[u]:
+                        self.addEdge(u, v, adjSet[u][v])
 
     def getVertices(self):
         return self.vertices

@@ -36,6 +36,10 @@ class Network(Graph):
                 self.flow[u][v] = 0
 
     def checkRep(self):
+        """
+        [DEBUG] Checks that every mapping/part of the Network rep is maintained.
+        Should be called before/after methods that mutate the Network's mappings.
+        """
         for u in self.flow:
             for v in self.flow[u]:
                 # If there is flow through an edge, then the flow must be <= the capacity
@@ -176,6 +180,7 @@ class Network(Graph):
         """
         Finds the max flow (as an integer), given the current flow network. Uses the Ford Fulkerson algorithm.
         Note: Pushes flow through the network (mutates the network's flow)
+        If no augmenting path exists at all, then the max flow is just 0.
         :return: int, value of the max flow
 
         Pseudocode (from https://www.hackerearth.com/practice/algorithms/graphs/maximum-flow/tutorial/):

@@ -4,25 +4,70 @@ class NegativeCapacityException(Exception):
     pass
 
 class Network(Graph):
+    """
+    A flow network. Inherits from a Graph, since there are still nodes and edges, but each edge has a corresponding
+    capacity. Any "flow" pushed through this edge cannot exceed this capacity, and the maximum possible amount of flow
+    that can exist at any point in the graph is the sum of all the capacities leaving the source node.
+
+    Also includes a residual network that maps edges to "extra flow" that can be pushed through (note: residual flow
+    can go backwards as well to "undo" flow that has already been pushed, if using Ford Fulkerson for max flow).
+    """
     def __init__(self, vertices, edges, capacities, source, sink):
         super(Network, self).__init__(vertices, edges, capacities)
         self.capacities = capacities  # Maps u -> {v1: c1, v2: c2, ... }, ...; must be a mapping w "weighted" edges
         self.source = source  # Source node S
         self.sink = sink  # Sink node T
         self.flow = {}  # Maps u -> {v1: f(u, v1), v2: f(u, v2), ... }, ...
-        self.resetFlow()
         self.residualNetwork = {}  # Maps u -> {v1: rf(u, v1), v2: rf(u, v2), ... }, ...
         # Residual network initialized to deep copy of capacities
         for u in self.capacities:
             self.residualNetwork[u] = {}
-            for v in self.capacities[u]:
-                self.residualNetwork[u][v] = self.capacities[u][v]
-
-    def resetFlow(self):  # modularized in case future methods need to refresh the flow network
-        for u in self.capacities:
             self.flow[u] = {}
             for v in self.capacities[u]:
+                self.residualNetwork[u][v] = self.capacities[u][v]
                 self.flow[u][v] = 0
+
+    def checkRep(self):
+        for u in self.flow:
+            for v in self.flow[u]:
+                # If there is flow through an edge, then the flow must be <= the capacity
+                assert u in self.capacities
+                assert v in self.capacities[u]
+                f = self.flow[u][v]
+                cp = self.capacities[u][v]
+                assert 0 <= f <= cp
+
+                # No edge in residual network if flow == capacity
+                if f == cp:
+                    if u in self.residualNetwork:
+                        assert v not in self.residualNetwork[u]
+                    assert v in self.residualNetwork and u in self.residualNetwork[v]
+                    assert f == self.residualNetwork[v][u]
+                else:  # Otherwise, residual flow must be <= capacity-flow, and must have a reverse edge w >= f(u,v)
+                    assert u in self.residualNetwork and v in self.residualNetwork[u]
+                    assert self.residualNetwork[u][v] <= self.capacities[u][v] - self.flow[u][v]
+                    if f == 0:  # If 0 flow, then reverse edge shouldn't be in the residual network
+                        if v in self.residualNetwork:
+                            assert u not in self.residualNetwork[v]
+                    else:  # Reverse edge >= f(u,v) since there could be other contributing flows through edge (u,v)
+                        assert v in self.residualNetwork and u in self.residualNetwork[v]
+                        assert self.residualNetwork[v][u] >= self.flow[u][v]
+
+        assert self.capacities == self.weights  # Aliased, so should be the same (pass by reference for dictionaries)
+
+        # Source and sink nodes must be present
+        # Total flow out of source must be equal to total flow into sink
+        sourceSum, sinkSum = 0, 0
+        assert self.source in self.flow
+        sinkPresent = False
+        for u in self.flow:
+            if self.sink in self.flow[u]:
+                sinkPresent = True
+                sinkSum += self.flow[u][self.sink]
+        assert sinkPresent
+        for f in self.flow[self.source].values():
+            sourceSum += f
+        assert sourceSum == sinkSum
 
     def addEdge(self, u, v, capacity=0):
         if capacity < 0:
@@ -92,10 +137,10 @@ class Network(Graph):
             else:
                 self.residualNetwork[v][u] = self.residualNetwork[v].get(u, 0) + additionalFlow
 
-    def FordFulkerson(self):
+    def getMaxFlow(self):
         """
-        Finds the max flow (as an integer), given the current flow network.
-        Pushes flow through the network (mutates the network's flow)
+        Finds the max flow (as an integer), given the current flow network. Uses the Ford Fulkerson algorithm.
+        Note: Pushes flow through the network (mutates the network's flow)
         :return: int, value of the max flow
 
         Pseudocode (from https://www.hackerearth.com/practice/algorithms/graphs/maximum-flow/tutorial/):
@@ -134,5 +179,6 @@ if __name__ == "__main__":
     weights = g.getWeights()
     N = Network(vertices, edges, weights, a, e)
 
-    print(N.FordFulkerson())
+    print(N.getMaxFlow())
+    N.checkRep()
 

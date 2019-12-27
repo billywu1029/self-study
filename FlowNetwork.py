@@ -12,14 +12,22 @@ class Network(Graph):
     Also includes a residual network that maps edges to "extra flow" that can be pushed through (note: residual flow
     can go backwards as well to "undo" flow that has already been pushed, if using Ford Fulkerson for max flow).
     """
-    def __init__(self, vertices, edges, capacities, source, sink):
-        super(Network, self).__init__(vertices, edges, capacities)
-        self.capacities = capacities  # Maps u -> {v1: c1, v2: c2, ... }, ...; must be a mapping w "weighted" edges
+    def __init__(self, source, sink, vertices=None, edges=None, capacities=None):
+        if vertices is None or edges is None or capacities is None:
+            self.capacities = {}
+            super(Network, self).__init__({source, sink}, {}, self.capacities)
+        else:
+            self.capacities = capacities  # Maps u -> {v1: c1, v2: c2, ... }, ...; must be a mapping w "weighted" edges
+            super(Network, self).__init__(vertices, edges, capacities)
         self.source = source  # Source node S
         self.sink = sink  # Sink node T
         self.flow = {}  # Maps u -> {v1: f(u, v1), v2: f(u, v2), ... }, ...
         self.residualNetwork = {}  # Maps u -> {v1: rf(u, v1), v2: rf(u, v2), ... }, ...
         # Residual network initialized to deep copy of capacities
+        self.resetFlowAndResidualNetwork()
+
+    def resetFlowAndResidualNetwork(self):
+        """For each edge present (specified in capacities mapping), reset flow to 0 and the residual to the capacity"""
         for u in self.capacities:
             self.residualNetwork[u] = {}
             self.flow[u] = {}
@@ -54,6 +62,12 @@ class Network(Graph):
                         assert self.residualNetwork[v][u] >= self.flow[u][v]
 
         assert self.capacities == self.weights  # Aliased, so should be the same (pass by reference for dictionaries)
+        for u in self.capacities:
+            for v in self.capacities[u]:
+                # Capacities must be non-negative, and also integral (otherwise Ford Fulkerson might converge properly)
+                cp = self.capacities[u][v]
+                assert cp >= 0
+                assert isinstance(cp, int)
 
         # Source and sink nodes must be present
         # Total flow out of source must be equal to total flow into sink
@@ -70,11 +84,32 @@ class Network(Graph):
         assert sourceSum == sinkSum
 
     def addEdge(self, u, v, capacity=0):
+        """
+        Given two vertices and a capacity, adds the edge to the flow network.
+        Throws an exception if the capacity specified is negative.
+        Behavior unspecified if there exists an edge back to the source S.
+        If flow values already filled in, then reset all flows and add the edge (u,v) (to prevent weird FF behavior)
+        """
         if capacity < 0:
             raise NegativeCapacityException
+        if any(self.flow[u][v] != 0 for u in self.flow for v in self.flow[u]):
+            self.resetFlowAndResidualNetwork()
+
+        # This will implicitly update capacities as well since it's aliased to Graph's weights mapping
         super().addEdge(u, v, capacity)
+        if u in self.flow:
+            self.flow[u][v] = 0
+            self.residualNetwork[u][v] = capacity
+        else:
+            self.flow[u] = {v: 0}
+            self.residualNetwork[u] = {v: capacity}
 
     def getAugmentingPath(self):
+        """
+        Gets the shortest-length augmenting path via BFS on the residual network. Uses Edmonds-Karp as the spec
+        since it bounds the number of augmentations to O(VE^2) rather than O(E * |f|) where f is the max flow
+        :return: list of vertices in the shortest-length augmenting path
+        """
         queue, visited, parents = [self.source], {self.source}, {self.source: self.source}
         while queue:
             node = queue.pop(0)
@@ -177,8 +212,22 @@ if __name__ == "__main__":
     vertices = g.getVertices()
     edges = g.getEdges()
     weights = g.getWeights()
-    N = Network(vertices, edges, weights, a, e)
+    N = Network(a, e, vertices, edges, weights)
 
-    print(N.getMaxFlow())
+    G = Network(a, e)
+    G.addEdge(a, b, 2)
+    G.addEdge(a, c, 3)
+    G.addEdge(c, b, 5)
+    G.addEdge(b, d, 4)
+    G.addEdge(c, e, 5)
+    G.addEdge(d, e, 4)
+    # Can implement a __eq__ to see if these really match programmatically if there's more time
+
     N.checkRep()
+    G.checkRep()
+    print(N.getMaxFlow())
+    print(G.getMaxFlow())
+    N.checkRep()
+    G.checkRep()
+
 

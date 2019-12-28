@@ -66,9 +66,8 @@ def topological_sort_SS(graph, source):
 
 def SSlongestPathDAG(g, s):
     g.verifyDAG(s)
-
     # Initialize all longest paths to -inf, if by the end any longest path is still -inf then it is unreachable from s
-    longestPaths = {s:0}  # maps vertex u -> LD(s, u) for all vertices u, where LD -> longest distance
+    longestPaths = {s: 0}  # maps vertex u -> LD(s, u) for all vertices u, where LD -> longest distance
     for v in g.vertices:
         if v != s:
             longestPaths[v] = -float('inf')
@@ -76,10 +75,9 @@ def SSlongestPathDAG(g, s):
     sortedVertices = topological_sort_SS(g, s)
     for u in sortedVertices:
         if u in g.edges.keys():
-            for e in g.edges[u]:
-                v, w = e.v, e.w
+            for v in g.edges[u]:
                 # Do the opposite of relaxing the edge - if d[v] < d[u] + w, then set d[v] to d[u] + w
-                longestPaths[v] = max(longestPaths[v], longestPaths[u] + w)
+                longestPaths[v] = max(longestPaths[v], longestPaths[u] + g.edges[u][v])
     return longestPaths
 
 def SSSPTopologicalRelaxation(g, s):
@@ -98,9 +96,8 @@ def SSSPTopologicalRelaxation(g, s):
     verticesSorted = topological_sort_SS(g, s)
     for u in verticesSorted:
         if u in g.edges.keys():
-            for e in g.edges[u]:
-                v, w = e.v, e.w
-                g.relax(u, v, w, shortestPaths)
+            for v in g[u]:
+                g.relax(u, v, g.edges[u][v], shortestPaths)
     return shortestPaths
 
 

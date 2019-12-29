@@ -113,27 +113,17 @@ class Network(Graph):
         since it bounds the number of augmentations to O(VE^2) rather than O(E * |f|) where f is the max flow
         :return: list of vertices in the shortest-length augmenting path
         """
-        queue, visited, parents = [self.source], {self.source}, {self.source: self.source}
-        while queue:
-            node = queue.pop(0)
-            if node == self.sink:
-                break
+        return self.residualGraph.bfs(self.source, self.sink)
 
-            for neighbor in self.residualGraph[node]:
-                if neighbor not in visited:
-                    parents[neighbor] = node
-                    queue.append(neighbor)
-                    visited.add(neighbor)
-
-        if self.sink not in parents:
-            return None
-        # Invariant at this point is that S, T \in parents set, and so \exists a path from S~~>T
-        i, path = self.sink, [self.sink]
-        while i != self.source:
-            i = parents[i]
-            path.append(i)
-
-        return path[::-1]  # Reverse path so that it is from source to sink
+    def getMinCapAlongAugPath(self, augPath):
+        """Returns the minimum capacity among all edges on a valid (non-null) augmenting path, augPath."""
+        assert augPath is not None
+        # Need to identify largest difference between any capacity and flow already being pushed through
+        additionalFlow = float('inf')
+        for i in range(len(augPath) - 1):
+            u, v = augPath[i], augPath[i + 1]
+            additionalFlow = min(additionalFlow, self.getCapacity(u, v) - self.flowGraph[u].get(v, 0))
+        return additionalFlow
 
     def pushAugmentingFlow(self, augPath):
         """
@@ -141,13 +131,7 @@ class Network(Graph):
         :param augPath: input path from source to sink node of possible nonzero additional flow, must not be None
         :return: null
         """
-        assert augPath is not None
-        # Need to identify largest difference between any capacity and flow already being pushed through
-        additionalFlow = float('inf')
-        for i in range(len(augPath) - 1):
-            u, v = augPath[i], augPath[i+1]
-            additionalFlow = min(additionalFlow, self.getCapacity(u, v) - self.flowGraph[u].get(v, 0))
-
+        additionalFlow = self.getMinCapAlongAugPath(augPath)
         # If an augmenting path is specified, then just need to make the necessary changes along the augmenting path
         for i in range(len(augPath) - 1):
             u, v = augPath[i], augPath[i+1]

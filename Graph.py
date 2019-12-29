@@ -3,7 +3,7 @@ class Graph:
         # Can construct a graph via edges adjacency set (u -> {v1: w1, v2: w2}, ...})
         # For ease of use, the vertices are assumed to not be be of type Graph.Vertex(x)
         self.vertices = set() if vertices is None else vertices
-        # Adjacency set for all the edges, maps Vertex objects to sets of Edge objects
+        # Adjacency set for all the edges - {u: {v1: w1, v2: w2, ...}, ...}
         self.edges = {} if edges is None else edges
 
     def getVertices(self):
@@ -17,13 +17,27 @@ class Graph:
         # Can instead yield from a generator for better performance, since there could be a lot of children -
         # Keep the list for now so that debugging/readability is easier
         if u in self.edges:
-            return [v for v in self.edges[u].keys()]
+            return (v for v in self.edges[u].keys())
         else:
-            return []
+            return ()
 
     def __getitem__(self, item):
-        # Dunder method to allow notation like graph[u] to represent children of u
-        return self.getChildren(item)
+        return self.edges.get(item, {})
+
+    def __setitem__(self, key, value):
+        assert isinstance(key, Vertex)
+        assert isinstance(value, dict) and all(isinstance(v, Vertex) for v in value)
+        self.edges[key] = value
+
+    def getWeight(self, u, v):
+        # Given vertices u and v, get the weight of the edge (u, v)
+        # Returns 0 if (u, v) not in the graph
+        if u not in self.edges or v not in self.edges[u]:
+            return 0
+        return self.edges[u][v]
+
+    def __contains__(self, item):
+        return item in self.vertices and item in self.edges
 
     def addEdge(self, u, v, w=0):  # Unweighted edges by default
         # Lazy way of making graph creation easier by specifying numbers in addEdge()
@@ -104,6 +118,7 @@ class Vertex:
 
     def __eq__(self, other):
         return isinstance(other, Vertex) and other.val == self.val
+
 
 if __name__ == "__main__":
     pass

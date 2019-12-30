@@ -95,9 +95,9 @@ def SSSPTopologicalRelaxation(g, s):
     # list of graph's vertices reachable from s in topological order
     verticesSorted = topological_sort_SS(g, s)
     for u in verticesSorted:
-        if u in g.edges.keys():
+        if u in g:
             for v in g[u]:
-                g.relax(u, v, g.edges[u][v], shortestPaths)
+                g.relax(u, v, shortestPaths)
     return shortestPaths
 
 

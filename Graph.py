@@ -1,3 +1,5 @@
+import heapq
+
 class Vertex:
     # Assume that a Vertex is immutable
     def __init__(self, x):
@@ -18,6 +20,18 @@ class Vertex:
 
     def __eq__(self, other):
         return isinstance(other, Vertex) and other.val == self.val
+
+    def __lt__(self, other):
+        return self if self.val < other.val else other
+
+    def __le__(self, other):
+        return self if self.val <= other.val else other
+
+    def __gt__(self, other):
+        return self if self.val > other.val else other
+
+    def __ge__(self, other):
+        return self if self.val >= other.val else other
 
 class Graph:
     def __init__(self, vertices=None, edges=None):
@@ -174,29 +188,14 @@ class Graph:
 
         return traverse(s)
 
-    @staticmethod
-    def minDistVertex(pq, d):
-        """
-        Find the vertex with current minimum distance and update Q to reflect its removal from the data structure
-        @param Q: a data structure storing the vertices ordered by minimum distance
-        @param d: a mapping of vertices to their current known shortest distance from a source node
-                  (source node has default distance of 0 from itself)
-        @return: the vertex of minimum distance from the start/source node
-        """
-        minDist, minNodeInd = float('inf'), None
-        for i, v in enumerate(pq):
-            if d[v] <= minDist:
-                minDist = d[v]
-                minNodeInd = i
-        assert minNodeInd is not None
-        minNode = pq[minNodeInd]
-        del pq[minNodeInd]
-        return minNode
-
     def dijkstra_SSSP(self, source):
         """
         Dijkstra's algorithm for single-source shortest paths, given a start and target Vertex.
         Note: graph must not contain any cycles with negative weights (for now, just restrict the graph to be a DAG)
+        Since this implementation uses heaps, our runtime complexity of Dijkstra's Algorithm is:
+        O(|E| * T(decrease_key()) + |V| * T(extract_min()))
+        -> O((|E| + |V|) log |V|)
+            since the heappush for decrease key and heappop's readjusting after extracting min are both O(log |V|). 
         @param source: source node
         @return: mapping of the shortest distances between source and every other vertex (default d(s, s) <- 0)
                  and a mapping of every node to its parent in its corresponding shortest path (see: subpaths of SP's
@@ -208,16 +207,19 @@ class Graph:
             d[v] = float('inf')
         d[source] = 0
         visited = set()
-        priority_queue = list(self.vertices)  # This can be changed to be a heapq later
+        priority_queue = [(0, source)]
         parentMap = {source: source}
 
         while priority_queue:
-            u = Graph.minDistVertex(priority_queue, d)
+            curr_d, u = heapq.heappop(priority_queue)
+            if curr_d > d[u]:
+                continue
             visited.add(u)
             for v in self.getChildren(u):
                 flag = self.relax(u, v, d)
                 if flag:
                     parentMap[v] = u
+                    heapq.heappush(priority_queue, (curr_d + self.edges[u][v], v))
 
         return d, parentMap
 
@@ -244,9 +246,9 @@ class Graph:
 if __name__ == "__main__":
     a, b, c, d, e = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e")
     G = Graph()
-    G.addEdge(a, b, 2)
-    G.addEdge(a, c, 3)
-    G.addEdge(c, b, 5)
+    G.addEdge(a, b, 3)
+    G.addEdge(a, c, 1)
+    G.addEdge(c, b, 1)
     G.addEdge(b, d, 4)
     G.addEdge(c, e, 5)
     G.addEdge(d, e, 4)

@@ -1,0 +1,32 @@
+{
+	"dayToMidnights": {
+		"M": ["bathrooms", "waitings", "dinings"],
+		"T": ["dishes", "commons", "waitings"],
+		"W": ["bathrooms", "dinings", "waitings"],
+		"Th": ["dishes", "dinings", "commons", "bathrooms", "waitings"],
+		"F": ["dinings", "commons", "dishes"],
+		"Sa": ["bathrooms"],
+		"Su": ["commons", "dishes"]
+	},
+	"midnightsToNumReq": {"bathrooms":  1, "dinings":  1, "waitings":  2, "commons":  1, "dishes":  1},
+	"people": ["Bill", "Dan Sun", "EQ", "Steven", "Tarunk", "Rajesh", "Jack"],
+	"dayPreferences": {
+		"Bill": ["M", "W", "F"],
+		"Dan Sun": ["T", "W", "Th", "F"],
+		"EQ": ["M", "W", "F", "Sa", "Su"],
+		"Steven": ["Sa", "Su"],
+		"Tarunk": ["M", "T", "W", "Th", "F", "Sa"],
+		"Rajesh": ["M", "T"],
+		"Jack": ["F", "Sa", "Su"]
+	},
+	"midnightPreferences": {
+		"Bill": ["bathrooms", "waitings", "commons"],
+		"Dan Sun": ["bathrooms", "dinings", "dishes", "waitings"],
+		"EQ": ["bathrooms", "dishes", "dinings"],
+		"Steven": ["dishes", "commons"],
+		"Tarunk": ["waitings", "commons", "dinings", "bathrooms", "commons"],
+		"Rajesh": ["bathrooms", "commons"],
+		"Jack": ["dishes", "waitings", "dinings"]
+	},
+	"progress": {"Bill": 21, "Dan Sun": 30, "EQ": 4, "Steven": 10, "Tarunk": 40, "Rajesh": 45, "Jack": 15}
+}

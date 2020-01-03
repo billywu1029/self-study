@@ -90,10 +90,10 @@ class Network(Graph):
             sourceSum += f
         assert sourceSum == sinkSum
 
-    def getCapacity(self, u, v) -> int:
+    def getCapacity(self, u: Vertex, v: Vertex) -> int:
         return self.getWeight(u, v)
 
-    def addEdge(self, u, v, capacity=0):
+    def addEdge(self, u: Vertex, v: Vertex, capacity: int = 0):
         """
         Given two vertices and a capacity, adds the edge to the flow network.
         Throws an exception if the capacity specified is negative.

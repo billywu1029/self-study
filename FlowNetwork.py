@@ -11,8 +11,10 @@ class Network(Graph):
 
     Also includes a residual network that maps edges to "extra flow" that can be pushed through (note: residual flow
     can go backwards as well to "undo" flow that has already been pushed, if using Ford Fulkerson for max flow).
+
+    As of 1/3/20, now also includes a cost function mapping so that the Network can solve for min cost max flow.
     """
-    def __init__(self, source, sink, vertices=None, capacities=None):
+    def __init__(self, source, sink, vertices=None, capacities=None, cost=None):
         if vertices is None or capacities is None:
             self.capacities = {}
             super(Network, self).__init__({source, sink}, self.capacities)
@@ -26,6 +28,7 @@ class Network(Graph):
         # Residual graph, keeps track of extra flow that can be pushed through
         self.residualGraph = Graph(vertices)  # initialized to deep copy of capacities
         self.resetFlowAndResidualGraph()
+        self.cost = {} if cost is None else cost
 
     def resetFlowAndResidualGraph(self):
         """For each edge present (specified in capacities mapping), reset flow to 0 and the residual to the capacity"""
@@ -87,7 +90,7 @@ class Network(Graph):
             sourceSum += f
         assert sourceSum == sinkSum
 
-    def getCapacity(self, u, v):
+    def getCapacity(self, u, v) -> int:
         return self.getWeight(u, v)
 
     def addEdge(self, u, v, capacity=0):
@@ -107,15 +110,15 @@ class Network(Graph):
         self.flowGraph.addEdge(u, v, 0)
         self.residualGraph.addEdge(u, v, capacity)
 
-    def getAugmentingPath(self):
+    def getAugmentingPath(self) -> list:
         """
         Gets the shortest-length augmenting path via BFS on the residual network. Uses Edmonds-Karp as the spec
         since it bounds the number of augmentations to O(VE^2) rather than O(E * |f|) where f is the max flow
-        :return: list of vertices in the shortest-length augmenting path
+        @return: list of vertices in the shortest-length augmenting path
         """
         return self.residualGraph.bfs(self.source, self.sink)
 
-    def getMinCapAlongAugPath(self, augPath):
+    def getMinCapAlongAugPath(self, augPath: list) -> int:
         """Returns the minimum capacity among all edges on a valid (non-null) augmenting path, augPath."""
         assert augPath is not None
         # Need to identify largest difference between any capacity and flow already being pushed through
@@ -125,11 +128,11 @@ class Network(Graph):
             additionalFlow = min(additionalFlow, self.getCapacity(u, v) - self.flowGraph[u].get(v, 0))
         return additionalFlow
 
-    def pushAugmentingFlow(self, augPath):
+    def pushAugmentingFlow(self, augPath: list):
         """
         Pushes augmenting flow along the specified path, and updates the residuals in the residual network
-        :param augPath: input path from source to sink node of possible nonzero additional flow, must not be None
-        :return: null
+        @param augPath: input path from source to sink node of possible nonzero additional flow, must not be None
+        @return: null
         """
         additionalFlow = self.getMinCapAlongAugPath(augPath)
         # If an augmenting path is specified, then just need to make the necessary changes along the augmenting path
@@ -156,12 +159,11 @@ class Network(Graph):
             else:
                 self.residualGraph[v][u] = self.residualGraph[v].get(u, 0) + additionalFlow
 
-    def getMaxFlow(self):
+    def getMaxFlow(self) -> int:
         """
         Finds the max flow (as an integer), given the current flow network. Uses the Ford Fulkerson algorithm.
         Note: Pushes flow through the network (mutates the network's flow)
         If no augmenting path exists at all, then the max flow is just 0.
-        :return: int, value of the max flow
 
         Pseudocode (from https://www.hackerearth.com/practice/algorithms/graphs/maximum-flow/tutorial/):
         function: FordFulkerson(Graph G,Node S,Node T):
@@ -171,8 +173,6 @@ class Network(Graph):
                 Update residual network graph
             return
         """
-        # Decided to keep the flow mapping + source/sink nodes in the constructor of a Network
-        # instead of inside a member function
         augmentingPath = self.getAugmentingPath()
         while augmentingPath is not None:
             self.pushAugmentingFlow(augmentingPath)
@@ -183,6 +183,45 @@ class Network(Graph):
             for v in self.flowGraph[self.source]:
                 maxFlow += self.flowGraph[self.source][v]
         return maxFlow
+
+    def getNegCostResidualCycle(self) -> list:
+        """
+        Detects if there exists a negative cost cycle in the Residual Graph, and if so, returns the cycle, o/w None.
+        Uses Bellman-Ford, since Dijkstra etc. cannot handle negative cost cycles.
+        @return: list of vertices in negative cost cycle from residual graph, or null if no cycle exists
+        """
+        cycle, d, p = self.residualGraph.bellmanFord_SSSP(self.sink)
+        return cycle
+
+    def getMinCostMaxFlow(self) -> int:
+        """
+        Finds the min cost max flow (assumed to be integral). Uses the cycle cancelling algorithm.
+        Note: mutates the current Flow Network state by redirecting flow after a feasible max flow is found (minimize c)
+
+        Pseudocode (from https://www.hackerearth.com/practice/algorithms/graphs/minimum-cost-maximum-flow/tutorial/)
+        function: MinCost(Graph G):
+            Find a feasible maximum flow of G using Ford Fulkerson and construct residual graph(Gf)
+            Gc = CostNetwork(G, Gf)
+            while(negativeCycle(Gc)):
+                Increase the flow along each edge in cycle C by minimum capacity in the cycle C
+                Update residual graph(Gf)
+                Gc = CostNetwork(G,Gf)
+            mincost = sum of Cij*Fij for each of the flow in residual graph
+            return mincost
+        """
+        self.getMaxFlow()  # Obtains a feasible max flow and updates the Flow and Residual graphs
+        negCostCycle = self.getNegCostResidualCycle()
+        while negCostCycle is not None:
+            self.pushAugmentingFlow(negCostCycle)
+            negCostCycle = self.getNegCostResidualCycle()
+
+        # By now, there are no more negative cost cycles in the residual graph, and so our flow cost must be optimal
+        minCostFlow = 0
+        for u in self.flowGraph.edges:
+            for v in self.flowGraph.edges[u]:
+                minCostFlow += self.flowGraph.getWeight(u, v) * self.cost[u][v]
+
+        return minCostFlow
 
 
 if __name__ == "__main__":

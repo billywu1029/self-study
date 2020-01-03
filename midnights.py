@@ -21,7 +21,7 @@ def weightedMidnightsCount(totalMidnights: int, numPeople: int, pointsProgress: 
     @param pointsProgress: number of midnight points the person has
     @return: int of max num of midnights one person should be allowed in a week
     """
-    return int(round(totalMidnights // numPeople * (pointsProgress / POINTS_REQ))) + 1
+    return int(round(totalMidnights // numPeople * (1 - pointsProgress / POINTS_REQ))) + 1
 
 def getMidnightAssignments(G: Network, people: list) -> dict:
     """
@@ -72,12 +72,10 @@ with open("midnights.json", "r") as infile:
         for m in dayToMidnights[day]:
             midnightsCount += 1
 
-    # TODO: Make absolutely sure that when adding Network edges that the Vertex type casting creation doesn't create
-    # TODO: any issues wrt Vertex(u) != Vertex(u) even though u === u
-
     for boi in people:
         # Edges from source to people with weight: w(S, p) = ceil(floor(n/k) * (progress[p]/total_req))
-        G.addEdge(S, boi, weightedMidnightsCount(midnightsCount, len(people), progress[boi]))
+        # G.addEdge(S, boi, weightedMidnightsCount(midnightsCount, len(people), progress[boi]))
+        G.addEdge(S, boi, 100000)
         for day in dayToMidnights:
             for m in dayToMidnights[day]:
                 for i in range(midnightsToNumReq[m]):
@@ -86,7 +84,7 @@ with open("midnights.json", "r") as infile:
                     if day in dayPreferences[boi] and m in midnightPreferences[boi]:
                         G.addEdge(boi, midnightWithDay, 1)
                     # Edges from midnights to sink with weight: w(m, T) = choresToNumReq[m]
-                    G.addEdge(midnightWithDay, T, midnightsToNumReq[m])
+                    G.addEdge(midnightWithDay, T, 1)
 
     print(G.getMaxFlow())
     peopleMidnightMap = getMidnightAssignments(G, people)

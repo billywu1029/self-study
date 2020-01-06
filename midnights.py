@@ -66,6 +66,21 @@ def createNewMidnight(day: str, m: str, i: int) -> str:
     """
     return "%s|%s|%r" % (day, m, i)
 
+def getPeopleMidnightsToDayAssignments(peopleTasksMap: dict) -> dict:
+    """
+    Given a mapping of people to their list of midnights, return a new map that maps each day to the corresponding
+    people that are in turn mapped to whichever midnights they were assigned to do for that particular day.
+    """
+    result = {"M": {}, "T": {}, "W": {}, "Th": {}, "F": {}, "Sa": {}, "Su": {}}
+    for boi in peopleTasksMap:
+        for m in peopleTasksMap[boi]:
+            day, midnight, idx = m.strip().split("|")  # Stay safe by stripping, remember that kids
+            if boi in result[day]:
+                result[day][boi].append(midnight)
+            else:
+                result[day][boi] = [midnight]
+    return result
+
 
 # Assuming that JSON file format is:
 # "dayToMidnights": {M: [bathrooms, dinings, ...], T: [...], ...}  // Days mapped to which midnights are needed that day
@@ -76,6 +91,7 @@ def createNewMidnight(day: str, m: str, i: int) -> str:
 # "progress": {Bill: 21, Jack: 35, ...}  // Number of midnights points each person has
 with open("midnights.json", "r") as infile:
     # TODO: Add point values to each midnight and let the cost generation reflect the point reward
+    # TODO: Limit each person to no more than 2 midnights per day, think about how to do this via costs maybe..?
     info = json.load(infile)
     dayToMidnights = info["dayToMidnights"]
     midnightsToNumReq = info["midnightsToNumReq"]
@@ -96,7 +112,7 @@ with open("midnights.json", "r") as infile:
     for boi in people:
         v[boi] = Vertex(boi)
         # Edges from source to people with weight: w(S, p) = ceil(floor(n/k) * (progress[p]/total_req))
-        G.addEdge(S, v[boi], 5, weightedPersonCost(progress[boi]))
+        G.addEdge(S, v[boi], 4, weightedPersonCost(progress[boi]))
 
     for day in dayToMidnights:
         for m in dayToMidnights[day]:
@@ -110,7 +126,8 @@ with open("midnights.json", "r") as infile:
                     if day in dayPreferences[boi] or m in midnightPreferences[boi]:
                         G.addEdge(v[boi], midnightWithDay, 1, costBoiMidnight)
 
-    # print(G.getMaxFlow())
     print(G.getMinCostMaxFlow())
     peopleMidnightMap = getMidnightAssignments(G, people)
     print(peopleMidnightMap)
+    dayToMidnightAssignmentsMap = getPeopleMidnightsToDayAssignments(peopleMidnightMap)
+    print(dayToMidnightAssignmentsMap)

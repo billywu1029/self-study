@@ -284,6 +284,7 @@ class Graph:
             cycle.append(nextNode)
             nextNode = p[nextNode]
         lastNode = nextNode
+        cycle.append(lastNode)  # Have the repeat just to emphasize that it is a cycle
 
         # If reached the original v, then the following does nothing. o/w we delete all vertices needed to reach a
         # vertex in the cycle by identifying the index where the first cycle vertex occurred in our predecessor walk

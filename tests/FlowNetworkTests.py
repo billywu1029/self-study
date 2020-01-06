@@ -16,17 +16,19 @@ class FlowNetworkTests(unittest.TestCase):
             - augPath is None, len 2, >2
             - Residual network has a path/no path
         - getMaxFlow()
-        - getMinCostMaxFlow()
+        - getMinCostMaxFlow(): (after identifying a feasible max flow, there exists: )
+            - 0, 1, >1 negative cost cycles
+            - 0, 1, >1 minimum capacity through cycle (if exists)
     """
 
     def testNegativeCapacity(self):
         a, b = Vertex("a"), Vertex("b")
-        G = Network(a, b)
+        G = FlowNetwork(a, b)
         self.assertRaises(NegativeCapacityException, G.addEdge(a, b, -5))
 
     def testAddNetworkEdgeStartEmpty(self):
         a, b, c, d, e, f = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e"), Vertex("f")
-        G = Network(a, f)
+        G = FlowNetwork(a, f)
         cp = 5
         G.addEdge(a, c, cp)
         self.assertEqual(G.flowGraph, {a: {c: 0}})
@@ -46,7 +48,7 @@ class FlowNetworkTests(unittest.TestCase):
 
     def testNoAugmentingPath(self):
         a, b, c, d, e, f = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e"), Vertex("f")
-        G = Network(a, f)
+        G = FlowNetwork(a, f)
         # TODO: Construct residual network s.t. there isn't a path S~~~>T, verify that getAugmentingPath() returns None
 
     def testPathWithCycle(self):
@@ -70,6 +72,23 @@ class FlowNetworkTests(unittest.TestCase):
         pass
 
     # TODO: create a helper function to test that all mappings are properly updated after a push flow operation
+
+    def testMinCostFlow2Cycles(self):
+        s, a, b, c, d, e, t = Vertex("S"), Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e"), Vertex("T")
+        G = FlowNetwork(s, t)
+        G.addEdge(s, a, 20, 4)
+        G.addEdge(s, c, 10, 2)
+        G.addEdge(a, b, 20, 3)
+        G.addEdge(b, c, 5, 1)
+        G.addEdge(b, d, 25, 5)
+        G.addEdge(c, e, 22, 2)
+        G.addEdge(d, t, 25, 6)
+        G.addEdge(b, t, 10, 20)
+        G.addEdge(e, t, 20, 6)
+
+        minCost, maxFlow = G.getMinCostMaxFlow()
+        self.assertEqual(minCost, 450)
+        self.assertEqual(maxFlow, 30)
 
 if __name__ == "__main__":
     unittest.main()

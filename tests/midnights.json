@@ -8,6 +8,9 @@
 		"Sa": ["bathrooms"],
 		"Su": ["commons", "dishes"]
 	},
+	"midnightPointValues": {
+		"bathrooms": 1, "waitings": 1, "commons": 1, "dishes": 4, "dinings": 2
+	},
 	"midnightsToNumReq": {"bathrooms":  1, "dinings":  1, "waitings":  2, "commons":  1, "dishes":  1},
 	"people": ["Bill", "Dan Sun", "EQ", "Steven", "Tarunk", "Rajesh", "Jack"],
 	"dayPreferences": {

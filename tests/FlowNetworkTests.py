@@ -1,5 +1,6 @@
 import unittest
 from FlowNetwork import *
+from tests.midnights import *
 
 class FlowNetworkTests(unittest.TestCase):
     """
@@ -87,6 +88,16 @@ class FlowNetworkTests(unittest.TestCase):
         minCost, maxFlow = G.getMinCostMaxFlow()
         self.assertEqual(minCost, 450)
         self.assertEqual(maxFlow, 30)
+
+    def testMidnightsMediumComplexity(self):
+        inpPath = "midnights.json"
+        dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences, midnightPreferences, progress = extractData(inpPath)
+        G = generateMidnightsFlowNetwork(dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences, midnightPreferences, progress)
+        cost, maxFlow = G.getMinCostMaxFlow()
+        peopleMidnightMap = getMidnightAssignments(G, people)
+        dayToMidnightAssignmentsMap = getPeopleMidnightsToDayAssignments(peopleMidnightMap)
+        peoplePointsGain = getPeoplePointsGain(dayToMidnightAssignmentsMap, midnightPointValues)
+        # TODO: assert that things are the way they are/implement a checker that reads from an answer JSON etc.
 
 if __name__ == "__main__":
     unittest.main()

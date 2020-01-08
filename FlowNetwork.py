@@ -30,6 +30,7 @@ class FlowNetwork:
 
     def resetFlowAndResidualGraph(self):
         """For each edge present, reset flow to 0 and the residual to the capacity"""
+        # TODO: Reset costGraph as well if we really want this reset feature to be reused outside of constructor
         for u in self.capacityGraph.edges:
             for v in self.capacityGraph.edges[u]:
                 self.residualGraph.addEdge(u, v, self.getCapacity(u, v))
@@ -138,15 +139,22 @@ class FlowNetwork:
         additionalFlow = float('inf')
         for i in range(len(augPath) - 1):
             u, v = augPath[i], augPath[i + 1]
-            additionalFlow = min(additionalFlow, self.getCapacity(u, v) - self.flowGraph[u].get(v, 0))
+            # Need this check if sending flow to "counter" existing flow
+            if u not in self.capacityGraph or (u in self.capacityGraph and v not in self.capacityGraph[u]):
+                assert v in self.flowGraph and u in self.flowGraph[v]  # Must be flow in opposite direction
+                additionalFlow = min(additionalFlow, self.flowGraph[v][u])  # min cap is sending this flow backwards
+            else:
+                additionalFlow = min(additionalFlow, self.getCapacity(u, v) - self.flowGraph[u].get(v, 0))
         return additionalFlow
 
     def pushAugmentingFlow(self, augPath: list, costsPresent: bool):
         """
-        Pushes augmenting flow along the specified path, and updates the residuals in the residual network
+        Pushes augmenting flow along the specified path, and updates the residuals in the residual graph
+            Note: also updates the cost graph's costs (which correspond to residual costs)
         @param augPath: input path from source to sink node of possible nonzero additional flow, must not be None
-        @param costsPresent: True if costs graph represents the costs of edges in residual graph, False o/w
-            (if Flow Network not initialized with costs in mind)
+            Note: can also be a cycle reachable from the sink node if using cycle cancelling.
+        @param costsPresent: True if cost graph represents the costs of edges in residual graph,
+            o/w False if Flow Network not initialized with costs in mind.
         @return: null
         """
         if costsPresent:

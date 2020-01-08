@@ -68,7 +68,7 @@ class Graph:
         # Given vertices u and v, get the weight of the edge (u, v)
         # Returns 0 if (u, v) not in the graph
         if u not in self.edges or v not in self.edges[u]:
-            return 0
+            raise ValueError("Edge not present in graph: %r, %r" % (u, v))
         return self.edges[u][v]
 
     def __contains__(self, item):

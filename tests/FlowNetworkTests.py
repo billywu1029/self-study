@@ -31,10 +31,8 @@ class FlowNetworkTests(unittest.TestCase):
         G = FlowNetwork(a, f)
         cp = 5
         G.addEdge(a, c, cp)
-        self.assertEqual(G.flowGraph, {a: {c: 0}})
-        self.assertEqual(G.capacities, {a: {c: cp}})
-        self.assertEqual(G.residualGraph, {a: {c: cp}})
-        self.assertEqual(G.vertices, {a, c, f})
+        self.assertEqual(G.capacityGraph.edges, {a: {c: cp}})
+        self.assertEqual(G.residualGraph.edges, {a: {c: cp}})
         self.assertEqual(G.source, a)
         self.assertEqual(G.sink, f)
 

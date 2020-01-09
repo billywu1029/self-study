@@ -9,6 +9,13 @@ class Vertex:
     def copy(self):
         return Vertex(self.val)
 
+    def serialize(self):
+        return str(self.val)
+
+    @staticmethod
+    def deserialize(val):
+        return Vertex(val)
+
     def __str__(self):
         return "vertex %r" % self.val
 
@@ -93,6 +100,30 @@ class Graph:
 
     def addVertex(self, x):
         self.vertices.add(Vertex(x))
+
+    def serialize(self) -> dict:
+        """Serializes the graph into a Python dictionary, with each vertex also serialized.
+        Format: {str: {str: int, ...}, ...}"""
+        result = {}
+        for u in self.edges:
+            uStr = u.serialize()
+            for v in self.edges[u]:
+                vStr = v.serialize()
+                if u not in result:
+                    result[uStr] = {vStr: self.edges[u][v]}
+                else:
+                    result[uStr][vStr] = self.edges[u][v]
+        return result
+
+    @staticmethod
+    def deserialize(data):
+        G = Graph()
+        for ustr in data:
+            u = Vertex.deserialize(ustr)
+            for vstr in data[u]:
+                v = Vertex.deserialize(vstr)
+                G.addEdge(u, v)
+        return G
 
     def bfs(self, start, target):
         # Given a graph/adjacency matrix/adjacency set, (in 6.006 ex create dict of paths to all V) find SP to target

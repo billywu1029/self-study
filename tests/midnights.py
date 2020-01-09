@@ -147,7 +147,7 @@ def generateMidnightsFlowNetwork(dayToMidnights: dict,
                                  dayPreferences: dict,
                                  midnightPreferences: dict,
                                  progress: dict,
-                                 outPath: str=None) -> FlowNetwork:
+                                 outPath: str = None) -> FlowNetwork:
     """
     Given midnights preferences/points info, generates a Flow Network to model the ZBT midnights assignment problem
     Optionally, write the Flow Network to an output JSON file, specified with path outPath
@@ -192,6 +192,21 @@ def generateMidnightsFlowNetwork(dayToMidnights: dict,
                             G.addEdge(dayWithBoi, midnightWithDay, 1, costBoiDayToMidnight)
 
     if outPath is not None:
-        G.serializeToJSON(outPath)  # TODO: Make a serialize + deserialize to/from JSON for the Flow Network
+        G.serializeToJSON(outPath)
 
     return G
+
+
+if __name__ == "__main__":
+    inpPath = "midnights.json"
+    dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences, midnightPreferences, progress = extractData(inpPath)
+    G = generateMidnightsFlowNetwork(dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences,
+                                     midnightPreferences, progress)
+    cost, maxFlow = G.getMinCostMaxFlow()
+    peopleMidnightMap = getMidnightAssignments(G, people)
+    dayToMidnightAssignmentsMap = getPeopleMidnightsToDayAssignments(peopleMidnightMap)
+    peoplePointsGain = getPeoplePointsGain(dayToMidnightAssignmentsMap, midnightPointValues)
+    print(cost, maxFlow)
+    print(peopleMidnightMap)
+    print(dayToMidnightAssignmentsMap)
+    print(peoplePointsGain)

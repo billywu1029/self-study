@@ -1,4 +1,5 @@
 from Graph import Graph, Vertex
+import json
 
 class NegativeCapacityException(Exception):
     pass
@@ -27,6 +28,15 @@ class FlowNetwork:
         self.cost = {} if cost is None else cost
         # Mutable, represents the residual graph's edge costs (ie cost func mappings * 1( (u,v) exists in res G ))
         self.costGraph = Graph(vertices, {k: self.cost[k] for k in self.cost})
+
+    @staticmethod
+    def createFlowNetwork(source, sink, vertices=None, capacities=None, cost=None, flowGraph=None, residualGraph=None, costGraph=None):
+        # Constructor only initializes flow/residual/cost graphs, but they could be different, so update them below
+        G = FlowNetwork(source, sink, vertices, capacities, cost)
+        G.flowGraph = Graph.deserialize(flowGraph)
+        G.residualGraph = Graph.deserialize(residualGraph)
+        G.costGraph = Graph.deserialize(costGraph)
+        return G
 
     def resetFlowAndResidualGraph(self):
         """For each edge present, reset flow to 0 and the residual to the capacity"""
@@ -87,6 +97,14 @@ class FlowNetwork:
         for f in flowMappings[self.source].values():
             sourceSum += f
         assert sourceSum == sinkSum
+
+        # Cost Graph checks: all edge weights w(u,v) must be <= cost[u][v]
+        for u in self.costGraph.edges:
+            for v in self.costGraph.edges[u]:
+                assert u in self.cost and v in self.cost[u]
+                assert self.costGraph.getWeight(u, v) <= self.cost[u][v]
+                # All cost graph edges must also belong to the residual network (costGraph == costs of residual edges)
+                assert u in self.residualGraph and v in self.residualGraph[u]
 
     def getCapacity(self, u: Vertex, v: Vertex) -> int:
         return self.capacityGraph.getWeight(u, v)
@@ -282,6 +300,44 @@ class FlowNetwork:
 
         return minCost, maxFlow
 
+    def serializeToJSON(self, outPath: str):
+        """Serializes the Flow Network into a JSON object, and writes it to the file specified (overwrites contents).
+        If no file exists, then it creates the file and writes to it.
+        Format:
+            "source": str
+            "sink": str
+            "vertices": list(str)
+            "capacities": {str: {str: int, ...}, ...}
+            "flow": {str: {str: int, ...}, ...}
+            "residual": {str: {str: int, ...}, ...}
+            "cost": {str: {str: int, ...}, ...}
+            "residualCost": {str: {str: int, ...}, ...}
+        """
+        with open(outPath, "w") as out:
+            result = {}
+            result["source"] = self.source.val
+            result["sink"] = self.sink.val
+            result["vertices"] = [v.val for v in self.capacityGraph.vertices]
+            result["capacities"] = self.capacityGraph.serialize()
+            result["cost"] = {k.val: {v.val: self.cost[k][v] for v in self.cost[k]} for k in self.cost}
+            result["flow"] = self.flowGraph.serialize()
+            result["residual"] = self.residualGraph.serialize()
+            result["residualCost"] = self.costGraph.serialize()
+            json.dump(result, out)
+
+    @staticmethod
+    def deserialize(inPath: str):
+        with open(inPath, "r") as inp:
+            data = json.load(inp)
+            return FlowNetwork.createFlowNetwork(data["source"],
+                                                 data["sink"],
+                                                 data["vertices"],
+                                                 data["capacities"],
+                                                 data["cost"],
+                                                 data["flow"],
+                                                 data["residual"],
+                                                 data["residualCost"])
+
 
 if __name__ == "__main__":
     a, b, c, d, e, t = Vertex("a"), Vertex("b"), Vertex("c"), Vertex("d"), Vertex("e"), Vertex("t")
@@ -325,7 +381,3 @@ if __name__ == "__main__":
 
     print(g.getMinCostMaxFlow())
     a = 1
-
-
-
-

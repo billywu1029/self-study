@@ -21,7 +21,9 @@ LIMITED_OPTIONS_MIDNIGHTS_REQ = 2  # max number of midnights one can pref to qua
 # Penalty for someone taking a higher point value midnight when they have higher point progress
 POINT_FAIRNESS_PENALTY_MULTIPLIER = 5
 MIDNIGHTS_PER_DAY_LIMIT = 1
-MIDNIGHTS_PER_WEEK_LIMIT = 3
+MIDNIGHTS_PER_WEEK_LIMIT = 2
+CAN_ASSIGN_NOT_PREF_MIDNIGHTS = True
+CAN_ASSIGN_NOT_PREF_DAYS = False
 
 def weightedPersonCost(pointsProgress: float) -> int:
     """
@@ -187,10 +189,15 @@ def generateMidnightsFlowNetwork(dayToMidnights: dict,
 
     for boi in people:
         for boisDay in dayToMidnights:  # all 7 days for each boi to capture midnights/day limit
-            # Limit by day preferences, ie only days pref'ed will have an edge from the boi -> day
-            if boisDay in dayPreferences[boi]:
+            if CAN_ASSIGN_NOT_PREF_DAYS:
                 dayWithBoi = createNewDayVertex(boisDay, boi)
                 G.addEdge(v[boi], dayWithBoi, MIDNIGHTS_PER_DAY_LIMIT, 1)
+            else:
+                # TODO: Refactor so this isn't copy-paste
+                # Limit by day preferences, ie only days pref'ed will have an edge from the boi -> day
+                if boisDay in dayPreferences[boi]:
+                    dayWithBoi = createNewDayVertex(boisDay, boi)
+                    G.addEdge(v[boi], dayWithBoi, MIDNIGHTS_PER_DAY_LIMIT, 1)
 
     # Gather midnight preference counts per midnight, so as to weight midnights that can only be done by 1 person
     # very negative, so that they are guaranteed to be assigned to them
@@ -206,9 +213,8 @@ def generateMidnightsFlowNetwork(dayToMidnights: dict,
                 # Edges from midnights to sink with weight 1, cost 1
                 G.addEdge(midnightWithDay, T, 1, 1)
                 for boi in people:
-                    # Limit by midnight preferences, ie only midnights pref'ed will have an edge from boiDay -> midnight
-                    if m in midnightPreferences[boi]:
-                        dayWithBoi = createNewDayVertex(day, boi)
+                    if CAN_ASSIGN_NOT_PREF_MIDNIGHTS:
+                        dayWithBoi = createNewDayVertex(day, boi)  # Just re-obtaining the dayboi Vertex for reference
                         # Edge from every boi's day to every midnight pref'ed, cost depends on progress
                         costBoiDayToMidnight = getCostBoiDayToMidnight(
                             m in midnightPreferences[boi],
@@ -218,24 +224,51 @@ def generateMidnightsFlowNetwork(dayToMidnights: dict,
                             len(midnightPreferences[boi])
                         )
                         G.addEdge(dayWithBoi, midnightWithDay, 1, costBoiDayToMidnight)
+                    else:
+                        # TODO: Refactor so this isn't copy-paste
+                        # Limit by midnight preferences, ie only midnights pref'ed will have edge (boiDay, midnight)
+                        if m in midnightPreferences[boi]:
+                            dayWithBoi = createNewDayVertex(day, boi)
+                            # Edge from every boi's day to every midnight pref'ed, cost depends on progress
+                            costBoiDayToMidnight = getCostBoiDayToMidnight(
+                                m in midnightPreferences[boi],
+                                midnightPointValues[m],
+                                progress[boi],
+                                midnightsPrefCountMap[m],
+                                len(midnightPreferences[boi])
+                            )
+                            G.addEdge(dayWithBoi, midnightWithDay, 1, costBoiDayToMidnight)
 
     if outPath is not None:
         G.serializeToJSON(outPath)
 
     return G
 
-
-if __name__ == "__main__":
-    inpPath = "midnightsBigTest.json"
-    dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences, midnightPreferences, progress = extractData(
-        inpPath)
-    G = generateMidnightsFlowNetwork(dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences,
-                                     midnightPreferences, progress)
+def generateMinCostMaxFlowAssignments(G: FlowNetwork, people: list, midnightPointValues: dict, outPath: str):
+    """
+    Finds the min-cost max flow given a Flow Network, G, and writes the results to a JSON file w format:
+        "cost": min cost max flow total cost
+        "maxFlow": total flow
+        "dayAssignments": mapping of day to a sub-mapping of person mapped to list of assigned midnights for that day
+        "pointsGained": mapping of people to their corresponding point values gained for the week, based on midnights
+    @param G: input Flow Network
+    @param people: list of people
+    @param midnightPointValues: mapping of midnights to their corresponding point values
+    @param outPath: path to output file - output file will be created/overwritten
+    """
     cost, maxFlow = G.getMinCostMaxFlow()
     peopleMidnightMap = getMidnightAssignments(G, people)
     dayToMidnightAssignmentsMap = getPeopleMidnightsToDayAssignments(peopleMidnightMap)
     peoplePointsGain = getPeoplePointsGain(dayToMidnightAssignmentsMap, midnightPointValues)
-    print(cost, maxFlow)
-    print(peopleMidnightMap)
-    print(dayToMidnightAssignmentsMap)
-    print(peoplePointsGain)
+    result = {"cost": cost, "maxFlow": maxFlow, "dayAssignments": dayToMidnightAssignmentsMap,"pointsGained": peoplePointsGain}
+    with open(outPath, "w") as outfile:
+        json.dump(result, outfile)
+
+
+if __name__ == "__main__":
+    inpPath = "midnightsBigTest.json"
+    dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences, midnightPreferences, progress = extractData(inpPath)
+    G = generateMidnightsFlowNetwork(dayToMidnights, midnightPointValues, midnightsToNumReq, people, dayPreferences,
+                                     midnightPreferences, progress)
+    generateMinCostMaxFlowAssignments(G, people, midnightPointValues, "assignments.json")
+    G.serializeToJSON("flowboiTest.json")  # Serializing after finding the min cost max flow

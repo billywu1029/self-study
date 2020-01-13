@@ -16,14 +16,16 @@ class FlowNetwork:
     min(sum(all capacities leaving S), sum(all capacities entering T))
     """
     def __init__(self, source, sink, vertices=None, capacities=None, cost=None):
-        # Maps u -> {v1: c1, v2: c2, ... }, ...; must be a mapping w "weighted" edges
-        self.capacityGraph = Graph(vertices, {} if capacities is None else capacities)
         self.source = source  # Source node S
         self.sink = sink  # Sink node T
-        self.flowGraph = Graph(vertices)  # Flow graph, keeps track of flow pushed through Network
+        # Maps u -> {v1: c1, v2: c2, ... }, ...; must be a mapping w "weighted" edges
+        self.capacityGraph = Graph(vertices, {} if capacities is None else capacities)
+        # Flow graph, keeps track of flow pushed through Network
+        self.flowGraph = Graph(vertices)
         # Residual graph, keeps track of extra flow that can be pushed through
         self.residualGraph = Graph(vertices)
         self.resetFlowAndResidualGraph()
+
         # No methods other than this constructor and addEdge should mutate this cost function mapping
         self.cost = {} if cost is None else cost
         # Mutable, represents the residual graph's edge costs (ie cost func mappings * 1( (u,v) exists in res G ))

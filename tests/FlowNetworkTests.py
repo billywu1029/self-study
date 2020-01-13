@@ -99,5 +99,31 @@ class FlowNetworkTests(unittest.TestCase):
         peoplePointsGain = getPeoplePointsGain(dayToMidnightAssignmentsMap, midnightPointValues)
         # TODO: assert that things are the way they are/implement a checker that reads from an answer JSON etc.
 
+    def test2Bois1MidnightPointProgressTiebreak(self):
+        # TODO: Use points progress only to justify an assignment/break a tie
+        pass
+
+    def test3Bois2MidnightsLimitedOptions(self):
+        # TODO: Use limited options for a boi to decide an assignment even though everyone else also pref'ed it
+        pass
+
+    def testNeedMidnightReward(self):
+        # TODO: 1 boi many prefs (but only one to pref 1 specific midnight) + some other bois w prefs,
+        # TODO: many midnights available, but assigned to midnight that needs to be done
+        pass
+
+    def testWeeklyAndDailyLimits(self):
+        # TODO: Ensure that the weekly and daily midnight limit is respected, on a small example
+        pass
+
+    def testEveryone0ProgressEqualAssignents(self):
+        # TODO: Not sure how to ensure fair assignments, but maybe can run it multiple times..?
+        pass
+
+    def testEveryoneAlmostDoneNoChildLeftBehind(self):
+        # TODO: When a bunch of people are done with their requirement but a few aren't, then ensure they are assigned
+        pass
+
+
 if __name__ == "__main__":
     unittest.main()

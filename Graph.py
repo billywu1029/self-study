@@ -109,7 +109,7 @@ class Graph:
             uStr = u.serialize()
             for v in self.edges[u]:
                 vStr = v.serialize()
-                if u not in result:
+                if uStr not in result:
                     result[uStr] = {vStr: self.edges[u][v]}
                 else:
                     result[uStr][vStr] = self.edges[u][v]

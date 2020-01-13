@@ -56,8 +56,7 @@ class Graph:
 
     def getChildren(self, u):
         assert isinstance(u, Vertex) and u in self.vertices
-        # Can instead yield from a generator for better performance, since there could be a lot of children -
-        # Keep the list for now so that debugging/readability is easier
+        # Can instead yield from a generator for better performance, since there could be a lot of children
         if u in self.edges:
             return (v for v in self.edges[u].keys())
         else:
@@ -82,6 +81,7 @@ class Graph:
         return item in self.vertices and item in self.edges
 
     def addEdge(self, u, v, w=0):  # Unweighted edges by default
+        # TODO: clean this up
         # Lazy way of making graph creation easier by specifying numbers in addEdge()
         # (instead of wrapping every number x with Vertex(x))
         if not isinstance(u, Vertex):
@@ -103,7 +103,8 @@ class Graph:
 
     def serialize(self) -> dict:
         """Serializes the graph into a Python dictionary, with each vertex also serialized.
-        Format: {str: {str: int, ...}, ...}"""
+        Format: {str: {str: int, ...}, ...}
+        """
         result = {}
         for u in self.edges:
             uStr = u.serialize()
@@ -177,7 +178,6 @@ class Graph:
 
         return path[::-1]  # Reverse path so that it is from start to target
 
-    # Should this be a static method or not??
     def relax(self, u, v, d, p=None, pq=None, curr_d=None):
         """
         If current "shortest" distance from s to v is greater than shortest distance from s to u + w(u,v), then set

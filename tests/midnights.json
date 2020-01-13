@@ -1,12 +1,12 @@
 {
 	"dayToMidnights": {
-		"M": ["bathrooms", "waitings", "dinings"],
-		"T": ["dishes", "commons", "waitings"],
-		"W": ["bathrooms", "dinings", "waitings"],
-		"Th": ["dishes", "dinings", "commons", "bathrooms", "waitings"],
-		"F": ["dinings", "commons", "dishes"],
-		"Sa": ["bathrooms"],
-		"Su": ["commons", "dishes"]
+		"Monday": ["bathrooms", "waitings", "dinings"],
+		"Tuesday": ["dishes", "commons", "waitings"],
+		"Wednesday": ["bathrooms", "dinings", "waitings"],
+		"Thursday": ["dishes", "dinings", "commons", "bathrooms", "waitings"],
+		"Friday": ["dinings", "commons", "dishes"],
+		"Saturday": ["bathrooms"],
+		"Sunday": ["commons", "dishes"]
 	},
 	"midnightPointValues": {
 		"bathrooms": 1, "waitings": 1, "commons": 1, "dishes": 4, "dinings": 2
@@ -14,13 +14,13 @@
 	"midnightsToNumReq": {"bathrooms":  1, "dinings":  1, "waitings":  2, "commons":  1, "dishes":  1},
 	"people": ["Bill", "Dan Sun", "EQ", "Steven", "Tarunk", "Rajesh", "Jack"],
 	"dayPreferences": {
-		"Bill": ["M", "W", "F"],
-		"Dan Sun": ["T", "W", "Th", "F"],
-		"EQ": ["M", "W", "F", "Sa", "Su"],
-		"Steven": ["Sa", "Su"],
-		"Tarunk": ["M", "T", "W", "Th", "F", "Sa"],
-		"Rajesh": ["M", "T"],
-		"Jack": ["F", "Sa", "Su"]
+		"Bill": ["Monday", "Wednesday", "Friday"],
+		"Dan Sun": ["Tuesday", "Wednesday", "Thursday", "Friday"],
+		"EQ": ["Monday", "Wednesday", "Friday", "Saturday", "Sunday"],
+		"Steven": ["Saturday", "Sunday"],
+		"Tarunk": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+		"Rajesh": ["Monday", "Tuesday"],
+		"Jack": ["Friday", "Saturday", "Sunday"]
 	},
 	"midnightPreferences": {
 		"Bill": ["bathrooms", "waitings", "commons"],

@@ -74,6 +74,8 @@ def construct_huffman_tree(s: str) -> HuffmanNode:
     while len(d) > 1:
         artificial_char_name += 1
         # Extract 2 min propability chars, remove them, then add the new artificial node w sum of their probabilities
+        # This min is a O(n) call each time, and since there are n outer calls, this loop becomes O(n^2).
+        # TODO: Consider sorting frequencies to help reduce runtime down to O(n log n)
         m1, v1 = min(d.items(), key=lambda x: x[1].prob)
         del d[m1]
         m2, v2 = min(d.items(), key=lambda x: x[1].prob)

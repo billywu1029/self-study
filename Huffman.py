@@ -20,17 +20,12 @@ class HuffmanNode:
         """[DEBUG] Ensure that probabilities of each node = sum(probability of left and probability of right).
         TODO: May want to ensure that floating point comparisons don't throw assertion errors if probs don't match!"""
         def traverse_verify(node):
+            # If the tree were to have a chainlike subtree, then the Huffman coding could be simplified by merging
+            # the 2 nodes into 1 to reduce the overall entropy. Therefore, this would never be a valid Huffman Tree.
+            assert (node.left is None and node.right is None) or (node.left is not None and node.right is not None)
             if node.left is None and node.right is None:
                 assert 0 <= node.prob <= 1
                 return node.prob
-            elif node.left is None and node.right is not None:
-                right_prob = traverse_verify(node.right)
-                assert node.prob == right_prob
-                return right_prob
-            elif node.left is not None and node.right is None:
-                left_prob = traverse_verify(node.left)
-                assert node.prob == left_prob
-                return left_prob
             else:
                 right_prob = traverse_verify(node.right)
                 left_prob = traverse_verify(node.left)
@@ -40,6 +35,24 @@ class HuffmanNode:
         final_prob = traverse_verify(self)
         assert final_prob == 1
 
+    def construct_encoding_table(self):
+        """Uses DFS through the Huffman Tree to construct the encoding table for all characters at the leaves."""
+        table = {}
+
+        def dfs(node, curr_bits=None):
+            if curr_bits is None:
+                curr_bits = []
+            if node.left is None and node.right is None:
+                if not curr_bits:  # Account for edge case of single node tree
+                    table[node.val] = '1'
+                else:
+                    table[node.val] = ''.join(curr_bits)
+            else:
+                dfs(node.left, curr_bits + ['1'])
+                dfs(node.right, curr_bits + ['0'])
+
+        dfs(self)
+        return table
 
 
 def construct_huffman_tree(s: str) -> HuffmanNode:
@@ -70,5 +83,40 @@ def construct_huffman_tree(s: str) -> HuffmanNode:
     return d[artificial_char_name]
 
 
-t = construct_huffman_tree('abcdefababc')
-t.check_rep()
+def encode_huffman(s: str, tree: HuffmanNode) -> str:
+    """Given a string and a Huffman tree encoding, generate the Huffman encoding table,
+    and return the bitstring for the encoding of the compressed string.
+    Assumes that tree is valid for s, ie every char in s is included in tree."""
+    encoding_table = tree.construct_encoding_table()
+    return ''.join([encoding_table[i] for i in s])
+
+
+def decode_huffman(c: str, tree: HuffmanNode) -> str:
+    """Given an encoded string and a Huffman tree encoding, traverse the Huffman tree
+    to obtain the original string. Assumes that ciphertext c has a valid mapping back
+    to an original string given the structure of the Huffman tree."""
+    # Traverse the tree, left for 1, right for a 0, until a leaf node/char is visited
+    ind = 0
+    s = []
+    curr_node = tree
+    while ind < len(c):
+        if curr_node.left is None and curr_node.right is None:
+            s.append(curr_node.val)
+            curr_node = tree
+        if c[ind] == '1':
+            curr_node = curr_node.left
+        else:
+            curr_node = curr_node.right
+        ind += 1
+    return ''.join(s)
+
+
+if __name__ == "__main__":
+    s = 'abcdefababc'
+    t = construct_huffman_tree(s)
+    t.check_rep()
+    c = encode_huffman(s, t)
+    d = decode_huffman(c, t)
+    print(c)
+    print(d)
+

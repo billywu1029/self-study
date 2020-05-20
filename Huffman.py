@@ -16,6 +16,32 @@ class HuffmanNode:
         self.left = left
         self.right = right
 
+    def check_rep(self):
+        """[DEBUG] Ensure that probabilities of each node = sum(probability of left and probability of right).
+        TODO: May want to ensure that floating point comparisons don't throw assertion errors if probs don't match!"""
+        def traverse_verify(node):
+            if node.left is None and node.right is None:
+                assert 0 <= node.prob <= 1
+                return node.prob
+            elif node.left is None and node.right is not None:
+                right_prob = traverse_verify(node.right)
+                assert node.prob == right_prob
+                return right_prob
+            elif node.left is not None and node.right is None:
+                left_prob = traverse_verify(node.left)
+                assert node.prob == left_prob
+                return left_prob
+            else:
+                right_prob = traverse_verify(node.right)
+                left_prob = traverse_verify(node.left)
+                assert node.prob == left_prob + right_prob
+                return node.prob
+
+        final_prob = traverse_verify(self)
+        assert final_prob == 1
+
+
+
 def construct_huffman_tree(s: str) -> HuffmanNode:
     if not s:
         raise RuntimeError("Must specify a non-zero length string as input.")
@@ -45,3 +71,4 @@ def construct_huffman_tree(s: str) -> HuffmanNode:
 
 
 t = construct_huffman_tree('abcdefababc')
+t.check_rep()

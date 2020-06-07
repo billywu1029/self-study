@@ -19,12 +19,12 @@ void clear_matrix(Matrix* A) {
     }
 }
 
-void read_matrix(FILE* fp, Matrix* A) {
-    fscanf(fp, "%d %d", &A->m, &A->n);
+void read_matrix(Matrix* A) {
+    scanf("%d %d", &A->m, &A->n);
     for (int i = 0; i < A->m; i++) {
         for (int j = 0; j < A->n; j++) {
             int x;
-            fscanf(fp, "%d", &x);
+            scanf("%d", &x);
             // Don't care if redundant assignment
             A->rows[i] |= x;
             A->cols[j] |= x;
@@ -80,19 +80,13 @@ char* game_winner(Matrix* A) {
 }
 
 int main() {
-    FILE* infile = fopen("matrix_game.in", "r");
-    if (infile == NULL) {
-        printf( "Error: could not open matrix_game.in\n" );
-        exit(EXIT_FAILURE);
-    }
-
     int num_matrices;
-    fscanf(infile, "%d", &num_matrices);
+    scanf("%d", &num_matrices);
     Matrix matrix;
 
     for (int i = 0; i < num_matrices; i++) {
         clear_matrix(&matrix);
-        read_matrix(infile, &matrix);
+        read_matrix(&matrix);
         // print_matrix(&matrix);
         char* answer = game_winner(&matrix);
         printf("%s\n", answer);

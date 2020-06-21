@@ -31,24 +31,14 @@ int main() {
             }
         }
 
-        if (evenIndices.size() == oddIndices.size()) {
-            if (evenIndices.size() % 2 == 0) {
-                printInPairs(evenIndices, evenIndices.size() - 2);
-                printInPairs(oddIndices, oddIndices.size());
-            } else {
-                printInPairs(evenIndices, evenIndices.size() - 1);
-                printInPairs(oddIndices, oddIndices.size() - 1);
-            }
+        if (evenIndices.size() % 2 == 1 && oddIndices.size() % 2 == 1) {
+            printInPairs(evenIndices, evenIndices.size() - 1);
+            printInPairs(oddIndices, oddIndices.size() - 1);
+        } else if (evenIndices.size() > 0) {
+            printInPairs(evenIndices, evenIndices.size() - 2);
+            printInPairs(oddIndices, oddIndices.size());
         } else {
-            vector<int>& larger = (evenIndices.size() > oddIndices.size()) ? evenIndices : oddIndices;
-            vector<int>& smaller = (evenIndices.size() > oddIndices.size()) ? oddIndices : evenIndices;
-            if (smaller.size() % 2 == 0) {
-                printInPairs(smaller, smaller.size());
-                printInPairs(larger, smaller.size());
-            } else {
-                printInPairs(smaller, smaller.size() - 1);
-                printInPairs(larger, larger.size() - 1);
-            }
+            printInPairs(oddIndices, oddIndices.size() - 2);
         }
     }
 }

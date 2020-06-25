@@ -1,5 +1,4 @@
 #include "list.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,12 +8,12 @@ struct List_node_s {
 };
 
 List empty_list( void ) {
-  return (List) { .length = 0, .front = NULL };
+  return (List) {.length = 0, .front = NULL};
 }
 
 // Allocate memory for a single List_node
-List_node* create_node( int value ) {
-  List_node *new_node = malloc( sizeof( List_node ) );
+List_node* create_node(int value) {
+  List_node *new_node = malloc(sizeof(List_node));
   new_node->value = value;
   new_node->next = NULL;
   return new_node;
@@ -31,9 +30,9 @@ void list_append( List *list, int value ) {
    */
     List_node *curr_node = list->front;
     if (!curr_node) {
-      list->front = create_node(value);
+        list->front = create_node(value);
     } else {
-        while( curr_node->next != NULL ) {
+        while (curr_node->next) {
             curr_node = curr_node->next;
         }
         List_node* next = create_node(value);
@@ -63,7 +62,7 @@ void list_insert_before( List *list, int insert, int before ) {
         list->front = new_node;
         list->length++;
     } else {
-        while( curr_node->next != NULL ) {
+        while (curr_node->next) {
             List_node *next_node = curr_node->next;
             if (next_node->value == before) {
                 List_node *new_node = create_node(insert);
@@ -101,7 +100,7 @@ void list_delete( List *list, int value ) {
             list->length--;
         }
     }
-    while (curr_node->next != NULL) {
+    while (curr_node->next) {
         List_node *next_node = curr_node->next;
         if (next_node->value == value) {
             curr_node->next = next_node->next;
@@ -116,37 +115,37 @@ void list_delete( List *list, int value ) {
 }
 
 void list_apply( List *list, int (*function_ptr)(int) ) {
-  /* Applies the function pointed to by function_ptr
-   * to every value at nodes in list 'list'.
-   * For example, starting with { 1 -> 2 -> 3 } and
-   * a function 
-   *
-   *     int sq(int x) { return x * x; }
-   * 
-   * call to list_apply( list, sq );
-   * results in { 1 -> 4 -> 9 }
-   */
+    /* Applies the function pointed to by function_ptr
+    * to every value at nodes in list 'list'.
+    * For example, starting with { 1 -> 2 -> 3 } and
+    * a function
+    *
+    *     int sq(int x) { return x * x; }
+    *
+    * call to list_apply( list, sq );
+    * results in { 1 -> 4 -> 9 }
+    */
     List_node *curr_node = list->front;
-    while (curr_node != NULL) {
+    while (curr_node) {
         curr_node->value = function_ptr(curr_node->value);
         curr_node = curr_node->next;
     }
 }
 
 int list_reduce( List *list, int (*function_ptr)(int, int) ) {
-  /* Takes an associative function pointed to by function_ptr
-   * and returns the result of reducing the list with it.
-   * For example, starting with { 1 -> 2 -> 3 } and
-   * a function
-   *
-   *    int plus( int x, int y ) { return x + y; }
-   * 
-   * list_reduce( list, plus );
-   * will return 1 + 2 + 3 = 6.
-   * If the provided list contains 0 elements,
-   * you should return 0; if the list has only one
-   * element, return the value of that element.
-   */
+    /* Takes an associative function pointed to by function_ptr
+    * and returns the result of reducing the list with it.
+    * For example, starting with { 1 -> 2 -> 3 } and
+    * a function
+    *
+    *    int plus( int x, int y ) { return x + y; }
+    *
+    * list_reduce( list, plus );
+    * will return 1 + 2 + 3 = 6.
+    * If the provided list contains 0 elements,
+    * you should return 0; if the list has only one
+    * element, return the value of that element.
+    */
     int result;
     List_node *curr_node = list->front;
     if (!curr_node) {
@@ -157,7 +156,7 @@ int list_reduce( List *list, int (*function_ptr)(int, int) ) {
         // Need initial value for result
         result = function_ptr(curr_node->value, curr_node->next->value);
         curr_node = curr_node->next;
-        while (curr_node->next != NULL) {
+        while (curr_node->next) {
             result = function_ptr(result, curr_node->next->value);
             curr_node = curr_node->next;
         }
@@ -166,42 +165,43 @@ int list_reduce( List *list, int (*function_ptr)(int, int) ) {
 }
 
 // Print out a linked list in human-readable form
-void list_print( List list ) {
-  if( list.front == NULL ) {
-    printf( "{}\n" );
-  } else {
-    printf( "{ " );
+void list_print(List list) {
+    if (!list.front) {
+        printf("{}\n");
+    } else {
+        printf("{ ");
 
-    List_node *p = list.front;
-    size_t length = list.length;
+        List_node *p = list.front;
+        size_t length = list.length;
 
-    while( p->next != NULL && length > 0 ) {
-      printf( "%d -> ", p->value );
-      p = p->next; --length;
+        while (p->next && length > 0) {
+            printf("%d -> ", p->value);
+            p = p->next;
+            --length;
+        }
+        printf("%d }\n", p->value);
+
+        if (length != 1) {
+            printf("Error: badly formed list.\n");
+            exit(EXIT_FAILURE);
+        }
     }
-    printf( "%d }\n", p->value );
-
-    if( length != 1 ) {
-      printf( "Error: badly formed list.\n" );
-      exit( EXIT_FAILURE );
-    }
-  }
 }
 
 // Frees the memory in List *list
-void list_clear( List *list ) {
-  List_node *front = list->front;
-  size_t length = list->length;
+void list_clear(List *list) {
+    List_node *front = list->front;
+    size_t length = list->length;
 
-  while( front != NULL && length > 0 ) {
-    List_node *next = front->next;
-    free( front );
-    front = next;
-    --length;
-  }
+    while (front && length > 0) {
+        List_node *next = front->next;
+        free(front);
+        front = next;
+        --length;
+    }
 
-  if( length != 0 ) {
-    printf( "Error: failed to clean up list properly.\n" );
-    exit( EXIT_FAILURE );
-  }
+    if (length != 0) {
+        printf("Error: failed to clean up list properly.\n");
+        exit(EXIT_FAILURE);
+    }
 }

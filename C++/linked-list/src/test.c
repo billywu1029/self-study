@@ -7,6 +7,10 @@ int sq( int x ) {
   return x * x;
 }
 
+int mult(int x, int y) {
+    return x * y;
+}
+
 int plus( int x, int y ) {
   return x + y;
 }
@@ -47,6 +51,16 @@ int main(void) {
     printf("list_apply() tests: \n");
     list_apply(&list, sq);
     list_print(list);
+
+    // list_reduce()
+    printf("list_reduce() tests: \n");
+    list_print(list);
+    printf("list_reduce on above list and plus combiner: %d\n", list_reduce(&list, plus));
+    for (int i = 10; i < 20; i += 2) {
+        list_append(&list, i);
+    }
+    list_print(list);
+    printf("list_reduce on above list and mult combiner: %d\n", list_reduce(&list, &mult));
 
     list_clear( &list );
 

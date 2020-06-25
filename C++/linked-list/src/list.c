@@ -147,8 +147,22 @@ int list_reduce( List *list, int (*function_ptr)(int, int) ) {
    * you should return 0; if the list has only one
    * element, return the value of that element.
    */
-  int result = 1;
-  return result;
+    int result;
+    List_node *curr_node = list->front;
+    if (!curr_node) {
+        return 0;
+    } else if (!curr_node->next) {
+        return curr_node->value;
+    } else {
+        // Need initial value for result
+        result = function_ptr(curr_node->value, curr_node->next->value);
+        curr_node = curr_node->next;
+        while (curr_node->next != NULL) {
+            result = function_ptr(result, curr_node->next->value);
+            curr_node = curr_node->next;
+        }
+    }
+    return result;
 }
 
 // Print out a linked list in human-readable form

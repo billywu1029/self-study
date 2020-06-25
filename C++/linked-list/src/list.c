@@ -126,6 +126,11 @@ void list_apply( List *list, int (*function_ptr)(int) ) {
    * call to list_apply( list, sq );
    * results in { 1 -> 4 -> 9 }
    */
+    List_node *curr_node = list->front;
+    while (curr_node != NULL) {
+        curr_node->value = function_ptr(curr_node->value);
+        curr_node = curr_node->next;
+    }
 }
 
 int list_reduce( List *list, int (*function_ptr)(int, int) ) {

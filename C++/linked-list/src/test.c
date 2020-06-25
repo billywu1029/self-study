@@ -43,6 +43,11 @@ int main(void) {
     list_delete(&list, 3);
     list_print(list);
 
+    // list_apply()
+    printf("list_apply() tests: \n");
+    list_apply(&list, sq);
+    list_print(list);
+
     list_clear( &list );
 
   return 0;

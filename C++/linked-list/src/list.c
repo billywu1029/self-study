@@ -20,7 +20,6 @@ List_node* create_node( int value ) {
   return new_node;
 }
 
-// Implement this
 void list_append( List *list, int value ) {
   /* Function to append a new node containing 'value'
    * to the end of List *list. For example,
@@ -43,7 +42,6 @@ void list_append( List *list, int value ) {
     list->length++;
 }
 
-// Implement this
 void list_insert_before( List *list, int insert, int before ) {
   /* This function should take a pointer to a List *list,
    * a value to insert 'insert', and a value to insert before 'before'.
@@ -80,7 +78,6 @@ void list_insert_before( List *list, int insert, int before ) {
     }
 }
 
-// Implement this
 void list_delete( List *list, int value ) {
   /* Delete all occurrences of the value 'value' in list.
    * For example, starting with { 0 -> 5 -> 4 -> 5 }
@@ -89,9 +86,35 @@ void list_delete( List *list, int value ) {
    * If there are no values to delete, the function should
    * do nothing.
    */
+    List_node *curr_node = list->front;
+    if (!curr_node) {
+        return;
+    }
+    while (curr_node->value == value) {
+        if (!curr_node->next) {
+            list->front = NULL;
+            list->length--;
+            return;
+        } else {
+            curr_node = curr_node->next;
+            list->front = curr_node;
+            list->length--;
+        }
+    }
+    while (curr_node->next != NULL) {
+        List_node *next_node = curr_node->next;
+        if (next_node->value == value) {
+            curr_node->next = next_node->next;
+            list->length--;
+        }
+        if (!curr_node->next) {
+            // TODO: add list->back adjustment here
+            break;
+        }
+        curr_node = curr_node->next;
+    }
 }
 
-// Implement this
 void list_apply( List *list, int (*function_ptr)(int) ) {
   /* Applies the function pointed to by function_ptr
    * to every value at nodes in list 'list'.

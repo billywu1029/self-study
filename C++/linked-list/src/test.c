@@ -18,7 +18,7 @@ int main(void) {
     for( int i = 0; i < N; ++i ) {
         list_append( &list, i );
     }
-    printf("Appending %d numbers: \n", N);
+    printf("list_append() tests: \n");
     list_print( list );
 
     // list_insert_before()
@@ -30,6 +30,17 @@ int main(void) {
     list_insert_before(&list, 0, 0);
     list_print(list);
     list_insert_before(&list, 4, 3);
+    list_print(list);
+
+    // list_delete()
+    printf("list_delete() tests: \n");
+    list_delete(&list, 0);
+    list_print(list);
+    list_delete(&list, 9);
+    list_print(list);
+    list_delete(&list, 4);
+    list_print(list);
+    list_delete(&list, 3);
     list_print(list);
 
     list_clear( &list );

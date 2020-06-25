@@ -1,6 +1,8 @@
 #include "list.h"
 #include <stdio.h>
 
+// TODO: Use AceUnit or CUnit for actual unit-testing
+
 int sq( int x ) {
   return x * x;
 }
@@ -10,13 +12,27 @@ int plus( int x, int y ) {
 }
 
 int main(void) {
-  int N = 5;
-  List list = empty_list();
-  for( int i = 0; i < N; ++i ) {
-    list_append( &list, i );
-  }
+    // list_append(), list_print(), list_clear()
+    int N = 5;
+    List list = empty_list();
+    for( int i = 0; i < N; ++i ) {
+        list_append( &list, i );
+    }
+    printf("Appending %d numbers: \n", N);
+    list_print( list );
 
-  list_print( list );
-  list_clear( &list );
+    // list_insert_before()
+    printf("list_insert_before() tests: \n");
+    list_insert_before(&list, -1, 4);
+    list_print(list);
+    list_insert_before(&list, -2, 9);
+    list_print(list);
+    list_insert_before(&list, 0, 0);
+    list_print(list);
+    list_insert_before(&list, 4, 3);
+    list_print(list);
+
+    list_clear( &list );
+
   return 0;
 }

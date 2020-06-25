@@ -30,18 +30,15 @@ void list_append( List *list, int value ) {
    *
    * TODO: Currently naive implementation of iterating all the way to the end of the LL to append
    */
-    List_node *front = list->front;
-    if (!front) {
+    List_node *curr_node = list->front;
+    if (!curr_node) {
       list->front = create_node(value);
-    } else if (front->next == NULL) {
-        List_node *next = create_node(value);
-        front->next = next;
     } else {
-        while( front->next != NULL ) {
-            front = front->next;
+        while( curr_node->next != NULL ) {
+            curr_node = curr_node->next;
         }
         List_node* next = create_node(value);
-        front->next = next;
+        curr_node->next = next;
     }
     list->length++;
 }
@@ -59,6 +56,28 @@ void list_insert_before( List *list, int insert, int before ) {
    * NOTE: if the value 'before' does not exist in 'list', this
    * function should not modify the list or append anywhere.
    */
+    List_node *curr_node = list->front;
+    if (!curr_node) {
+        return;
+    } else if (curr_node->value == before) {
+        List_node *new_node = create_node(insert);
+        new_node->next = curr_node;
+        list->front = new_node;
+        list->length++;
+    } else {
+        while( curr_node->next != NULL ) {
+            List_node *next_node = curr_node->next;
+            if (next_node->value == before) {
+                List_node *new_node = create_node(insert);
+                curr_node->next = new_node;
+                new_node->next = next_node;
+                list->length++;
+                break;
+            } else {
+                curr_node = curr_node->next;
+            }
+        }
+    }
 }
 
 // Implement this

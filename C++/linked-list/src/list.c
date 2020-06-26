@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 struct List_node_s {
+  // Singly linked list for now
+  // TODO: If doubly linked list, add a prev pointer
   List_node *next;
   int value;
 };
@@ -93,11 +95,13 @@ void list_delete( List *list, int value ) {
         if (!curr_node->next) {
             list->front = NULL;
             list->length--;
+            free(curr_node);
             return;
         } else {
-            curr_node = curr_node->next;
-            list->front = curr_node;
+            list->front = curr_node->next;
             list->length--;
+            free(curr_node);
+            curr_node = list->front;
         }
     }
     while (curr_node->next) {
@@ -105,6 +109,7 @@ void list_delete( List *list, int value ) {
         if (next_node->value == value) {
             curr_node->next = next_node->next;
             list->length--;
+            free(next_node);
         }
         if (!curr_node->next) {
             // TODO: add list->back adjustment here

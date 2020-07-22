@@ -16,7 +16,7 @@ using namespace std;
 int COEFF_MAX_VAL = 1000;
 
 vector<int> construct_polynomial(int degree, int s);
-int evaluate_polynomial(vector<int> p_x, int x);
+int evaluate_polynomial(const vector<int> &p_x, int x);
 
 // Share generation
 // Accept input n: num shares, t: threshold num shares (to decrypt), s: secret
@@ -78,8 +78,8 @@ int evaluate_polynomial(const vector<int> &p_x, const int x) {
 }
 
 int main(int argc, char** argv) {
-    assert (argc >= 1);
-    cout << argv[0] << endl;
+    assert (argc >= 2);
+    cout << argv[1] << endl;
     return 0;
 }
 

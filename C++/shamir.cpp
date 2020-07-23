@@ -21,6 +21,7 @@ int evaluate_polynomial(const vector<int> &p_x, int x);
 // Share generation
 // Accept input n: num shares, t: threshold num shares (to decrypt), s: secret
 vector<pair<int, int>> generate_shares(const int n, const int t, const int s) {
+    assert(n >= t);
     vector<pair<int, int>> shares;
     vector<int> p_x = construct_polynomial(t-1, s);
     random_device rd;  // Used to obtain a seed for the mersenne twister rng
@@ -28,7 +29,7 @@ vector<pair<int, int>> generate_shares(const int n, const int t, const int s) {
 
     shuffle(p_x.begin(), p_x.end(), rng);
     shares.reserve(n);
-    for (int x = 0; x < n; x++) {
+    for (int x = 1; x <= n; x++) {
         pair<int, int> share;
         share = make_pair(x, evaluate_polynomial(p_x, x));
         shares.push_back(share);
@@ -53,33 +54,34 @@ vector<int> construct_polynomial(const int degree, const int s) {
     return p_x;
 }
 
-int pow_int(int x, int p) {
-    // Borrowed from https://stackoverflow.com/questions/1505675/power-of-an-integer-in-c
-    // TODO: Consider making this iterative instead of recursive to avoid stack overflow
-    if (p == 0) return 1;
-    if (p == 1) return x;
-
-    int tmp = pow_int(x, p / 2);
-    if (p % 2 == 0) return tmp * tmp;
-    else return x * tmp * tmp;
-}
-
 // Evaluate polynomial
-// Evaluate P(x) for some value x
-int evaluate_polynomial(const vector<int> &p_x, const int x) {
+// Evaluate P(x) for some value x, P(x) assumed to be at least 2nd degree
+int evaluate_polynomial(const vector<int> &p_x, int x) {
     int result = 0;  // TODO: Potentially need to ensure no integer overflows
-    size_t n = p_x.size() - 1;  // degree of the polynomial (exponent of the highest order term)
-    int x_term_pow = pow_int(x, n);
-    for (size_t i = n; i >= 0; i--) {
-        result += p_x[i] * x_term_pow;
-        x_term_pow /= x;
+    size_t n = p_x.size();
+    assert(n >= 2);
+
+    result += p_x[n - 1];
+    for (size_t i = n - 1; i > 0; i--) {
+        result += p_x[i - 1] * x;
+        x *= x;
     }
     return result;
 }
 
 int main(int argc, char** argv) {
-    assert (argc >= 2);
-    cout << argv[1] << endl;
+    assert (argc == 4);
+    int n, t, s;
+    n = atoi(argv[1]);
+    t = atoi(argv[2]);
+    s = atoi(argv[3]);
+    cout << "n shares: " << n << endl;
+    cout << "t threshold shares: " << t << endl;
+    cout << "s secret: " << s << endl;  // TODO: this defeats the purpose of the secret hehe
+    vector<pair<int, int>> shares = generate_shares(n, t, s);
+    for (int i = 0; i < shares.size(); i++) {
+        cout << "share " << i << ": (" << shares[i].first << ", " << shares[i].second << ")\n";
+    }
     return 0;
 }
 

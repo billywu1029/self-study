@@ -62,6 +62,7 @@ uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     // Clever way to evaluate this while staying within the finite field:
     // result = a_0 + a_1*x + a_2*x^2 + ... ... mod p
     //        = a_0 + x( a_1 + x( a_2 + ... ... ) mod p ) mod p
+    // TODO: How is overflow handled? Perhaps should reduce _PRIME_FF to avoid some janky math that could cause bugs..?
     uint64_t result = 0;
     for (size_t i = p_x.size(); i > 0; i--) {
         result += p_x[i-1];
@@ -70,13 +71,6 @@ uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     }
     return result;
 }
-
-//// Reconstruction of the Secret
-//// Collect t or more shares, use Lagrange's Interpolation to reconstruct the polynomial and solve for P(0)
-//int reconstruct_secret(const vector<int> &shares, int t) {
-//    assert(shares.size() >= t);
-//
-//}
 
 int main(int argc, char** argv) {
     assert (argc == 4);

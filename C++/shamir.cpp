@@ -2,6 +2,7 @@
 // Created by bill on 7/21/20.
 // Implements Shamir's Secret Sharing scheme.
 // Polynomials will be organized such that p_x[0] is the n-1th degree coefficient, and p_x[-1] is the constant term
+// Also operates in a finite field characterized by 2^64 - 59 (largest 64 bit prime), for 64-bit security.
 //
 
 #include <iostream>
@@ -10,41 +11,42 @@
 #include <utility>  // std::pair
 #include <random>  // std::random_device, std::mt19937 (mersenne twister engine), std::uniform_int_distribution
 #include <algorithm>  // std::shuffle (for permutation of indices)
+#include <cstdint>  // uint64_t
 
 using namespace std;
 
-int COEFF_MAX_VAL = 1000;
+// Trick to get 2^64 - 59 without pow or even bitshifting
+uint64_t PRIME_FF = -59;
 
-vector<int> construct_polynomial(int degree, int s);
-int evaluate_polynomial(const vector<int> &p_x, int x);
+vector<uint64_t> construct_polynomial(uint64_t degree, uint64_t s);
+uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, uint64_t x);
 
 // Share generation
 // Accept input n: num shares, t: threshold num shares (to decrypt), s: secret
-vector<pair<int, int>> generate_shares(const int n, const int t, const int s) {
+vector<pair<uint64_t, uint64_t>> generate_shares(const uint64_t n, const uint64_t t, const uint64_t s) {
     assert(n >= t);
-    vector<pair<int, int>> shares;
-    vector<int> p_x = construct_polynomial(t-1, s);
+    vector<pair<uint64_t, uint64_t>> shares;
+    vector<uint64_t> p_x = construct_polynomial(t-1, s);
     random_device rd;  // Used to obtain a seed for the mersenne twister rng
-    mt19937 rng(rd());  // Standard mersenne_twister_engine seeded with rd()
+    mt19937_64 rng(rd());  // Standard mersenne_twister_engine (64-bits) seeded with rd()
 
     shuffle(p_x.begin(), p_x.end(), rng);
     shares.reserve(n);
-    for (int x = 1; x <= n; x++) {
-        pair<int, int> share;
+    for (uint64_t x = 1; x <= n; x++) {
+        pair<uint64_t, uint64_t> share;
         share = make_pair(x, evaluate_polynomial(p_x, x));
         shares.push_back(share);
     }
-
     return shares;
 }
 
 // Construct polynomial
 // P(x) of degree t-1. Random coefficients, constant term is the secret s
-vector<int> construct_polynomial(const int degree, const int s) {
-    vector<int> p_x;
+vector<uint64_t> construct_polynomial(const uint64_t degree, const uint64_t s) {
+    vector<uint64_t> p_x;
     random_device rd;
-    mt19937 rng(rd());
-    uniform_int_distribution<> distrib(0, COEFF_MAX_VAL);
+    mt19937_64 rng(rd());
+    uniform_int_distribution<uint64_t> distrib(0, PRIME_FF);
 
     p_x.reserve(degree + 1);
     for (int i = 0; i < degree; i++) {
@@ -56,29 +58,36 @@ vector<int> construct_polynomial(const int degree, const int s) {
 
 // Evaluate polynomial
 // Evaluate P(x) for some value x, P(x) assumed to be at least 2nd degree
-int evaluate_polynomial(const vector<int> &p_x, int x) {
-    int result = 0;  // TODO: Potentially need to ensure no integer overflows
-    size_t n = p_x.size();
-    assert(n >= 2);
-
-    result += p_x[n - 1];
-    for (size_t i = n - 1; i > 0; i--) {
-        result += p_x[i - 1] * x;
-        x *= x;
+uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
+    // Clever way to evaluate this while staying within the finite field:
+    // result = a_0 + a_1*x + a_2*x^2 + ... ... mod p
+    //        = a_0 + x( a_1 + x( a_2 + ... ... ) mod p ) mod p
+    uint64_t result = 0;
+    for (size_t i = p_x.size(); i > 0; i--) {
+        result += p_x[i-1];
+        result *= x;
+        result %= PRIME_FF;
     }
     return result;
 }
 
+//// Reconstruction of the Secret
+//// Collect t or more shares, use Lagrange's Interpolation to reconstruct the polynomial and solve for P(0)
+//int reconstruct_secret(const vector<int> &shares, int t) {
+//    assert(shares.size() >= t);
+//
+//}
+
 int main(int argc, char** argv) {
     assert (argc == 4);
-    int n, t, s;
+    uint64_t n, t, s;
     n = atoi(argv[1]);
     t = atoi(argv[2]);
     s = atoi(argv[3]);
     cout << "n shares: " << n << endl;
     cout << "t threshold shares: " << t << endl;
     cout << "s secret: " << s << endl;  // TODO: this defeats the purpose of the secret hehe
-    vector<pair<int, int>> shares = generate_shares(n, t, s);
+    vector<pair<uint64_t, uint64_t>> shares = generate_shares(n, t, s);
     for (int i = 0; i < shares.size(); i++) {
         cout << "share " << i << ": (" << shares[i].first << ", " << shares[i].second << ")\n";
     }

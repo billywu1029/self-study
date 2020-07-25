@@ -72,6 +72,38 @@ uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     return result;
 }
 
+// Lagrange Interpolation given k points, k >= t (the threshold), evaluated at x = 0. Assumes that points are distinct
+// TODO: Division mod by P, also multiplication overflow issues
+uint64_t lagrange_interpolate(const vector<pair<uint64_t, uint64_t>> &points, const uint64_t k) {
+    uint64_t result = 0;
+    uint64_t prod_num = 1;
+    uint64_t prod_denom = 1;
+    for (size_t i = 0; i < k; i++) {
+        prod_num *= points[i].first;
+        prod_num %= PRIME_FF;
+    }
+
+    for (size_t j = 0; j < k; j++) {
+        uint64_t x_j = points[j].first;
+        uint64_t prod = prod_num / x_j;
+        for (size_t m = 0; m < k; m++) {
+            if (m == j) continue;
+            prod_denom *= (points[m].first - x_j);
+            prod_denom %= PRIME_FF;
+        }
+        result += points[j].second * prod;
+        result %= PRIME_FF;
+    }
+    return result;
+}
+
+// Reconstruct Secret
+// Reconstruct the secret via Lagrange Interpolation over the finite field specified by PRIME_FF
+uint64_t reconstruct_secret(const vector<pair<uint64_t, uint64_t>> &shares, const uint64_t t) {
+    assert(shares.size() >= t);
+    return lagrange_interpolate(shares, t);
+}
+
 int main(int argc, char** argv) {
     assert (argc == 4);
     uint64_t n, t, s;
@@ -85,6 +117,9 @@ int main(int argc, char** argv) {
     for (int i = 0; i < shares.size(); i++) {
         cout << "share " << i << ": (" << shares[i].first << ", " << shares[i].second << ")\n";
     }
+
+    uint64_t secret_reconstructed = reconstruct_secret(shares, t);
+    cout << secret_reconstructed << endl;
     return 0;
 }
 

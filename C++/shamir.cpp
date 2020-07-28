@@ -27,7 +27,7 @@ inline uint64_t add_ff(const uint64_t x, const uint64_t y, const uint64_t p = PR
 }
 
 inline uint64_t subtract_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
-    return (x - y) < 0 ? (x - y) + p : (x - y);
+    return y > x ? add_ff(x, p-y) : (x - y);
 }
 
 inline uint64_t multiply_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
@@ -121,8 +121,8 @@ uint64_t lagrange_interpolate(const vector<pair<uint64_t, uint64_t>> &points, co
         uint64_t prod = divide_ff(prod_num, x_j);
         for (size_t m = 0; m < k; m++) {
             if (m == j) continue;
-            // TODO: fix negative number bug, -1 != -1 mod p, it is uint64_t max - 1
-            prod_denom = multiply_ff(prod_denom,points[m].first - x_j);
+            uint64_t denom_term = subtract_ff(points[m].first, x_j);
+            prod_denom = multiply_ff(prod_denom, denom_term);
         }
         prod = divide_ff(prod, prod_denom);
         prod = multiply_ff(prod, points[j].second);

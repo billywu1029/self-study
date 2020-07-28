@@ -140,13 +140,10 @@ uint64_t reconstruct_secret(const vector<pair<uint64_t, uint64_t>> &shares, cons
 
 int main(int argc, char** argv) {
     uint64_t n, t, s;
-//    assert (argc == 4);
-//    n = atoi(argv[1]);
-//    t = atoi(argv[2]);
-//    s = atoi(argv[3]);
-    n = 3;
-    t = 2;
-    s = 69;
+    assert (argc == 4);
+    n = atoi(argv[1]);
+    t = atoi(argv[2]);
+    s = atoi(argv[3]);
     cout << "n shares: " << n << endl;
     cout << "t threshold shares: " << t << endl;
     cout << "s secret: " << s << endl;
@@ -158,13 +155,16 @@ int main(int argc, char** argv) {
     uint64_t secret_reconstructed = reconstruct_secret(shares, t);
     cout << secret_reconstructed << endl;
 
-//    vector<pair<uint64_t, uint64_t>> testshares;
-//    testshares.emplace_back(1, 2);
-//    testshares.emplace_back(3, 0);
-//
-//    uint64_t test = lagrange_interpolate(testshares, 2);
-//    uint64_t test2 = multiply_ff(PRIME_FF, divide_ff(3, PRIME_FF));
-//    cout << test2 << endl;
+    vector<pair<uint64_t, uint64_t>> testshares;
+    testshares.emplace_back(1, 2);
+    testshares.emplace_back(3, 0);
+
+    uint64_t test = lagrange_interpolate(testshares, 2);
+    cout << test << endl;
+    // Looks like when x or y == p then arithmetic breaks down, but should be in spec since operations in
+    // finite fields only operate on numbers between [0, ..., p - 1] inclusive. TODO: Put p-1 in unittests later.
+    uint64_t test2 = multiply_ff(PRIME_FF, divide_ff(3, PRIME_FF));
+    cout << test2 << endl;
     return 0;
 }
 

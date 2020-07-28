@@ -62,16 +62,18 @@ vector<pair<uint64_t, uint64_t>> generate_shares(const uint64_t n, const uint64_
     assert(n >= t);
     vector<pair<uint64_t, uint64_t>> shares;
     vector<uint64_t> p_x = construct_polynomial(t-1, s);
-    random_device rd;  // Used to obtain a seed for the mersenne twister rng
-    mt19937_64 rng(rd());  // Standard mersenne_twister_engine (64-bits) seeded with rd()
-
-    shuffle(p_x.begin(), p_x.end(), rng);
     shares.reserve(n);
     for (uint64_t x = 1; x <= n; x++) {
         pair<uint64_t, uint64_t> share;
         share = make_pair(x, evaluate_polynomial(p_x, x));
         shares.push_back(share);
     }
+    // [DEBUG]
+    for (uint64_t exp = t; exp > 1; exp--) {
+        cout << p_x[t - exp] << "x^" << exp - 1 << " + ";
+    }
+    cout << s << " = 0" << endl;
+
     return shares;
 }
 
@@ -137,14 +139,17 @@ uint64_t reconstruct_secret(const vector<pair<uint64_t, uint64_t>> &shares, cons
 }
 
 int main(int argc, char** argv) {
-    assert (argc == 4);
     uint64_t n, t, s;
-    n = atoi(argv[1]);
-    t = atoi(argv[2]);
-    s = atoi(argv[3]);
+//    assert (argc == 4);
+//    n = atoi(argv[1]);
+//    t = atoi(argv[2]);
+//    s = atoi(argv[3]);
+    n = 3;
+    t = 2;
+    s = 69;
     cout << "n shares: " << n << endl;
     cout << "t threshold shares: " << t << endl;
-    cout << "s secret: " << s << endl;  // TODO: this defeats the purpose of the secret hehe
+    cout << "s secret: " << s << endl;
     vector<pair<uint64_t, uint64_t>> shares = generate_shares(n, t, s);
     for (int i = 0; i < shares.size(); i++) {
         cout << "share " << i << ": (" << shares[i].first << ", " << shares[i].second << ")\n";
@@ -152,6 +157,14 @@ int main(int argc, char** argv) {
 
     uint64_t secret_reconstructed = reconstruct_secret(shares, t);
     cout << secret_reconstructed << endl;
+
+//    vector<pair<uint64_t, uint64_t>> testshares;
+//    testshares.emplace_back(1, 2);
+//    testshares.emplace_back(3, 0);
+//
+//    uint64_t test = lagrange_interpolate(testshares, 2);
+//    uint64_t test2 = multiply_ff(PRIME_FF, divide_ff(3, PRIME_FF));
+//    cout << test2 << endl;
     return 0;
 }
 

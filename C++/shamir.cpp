@@ -21,6 +21,41 @@ uint64_t PRIME_FF = (1ULL << 32) - 5;
 vector<uint64_t> construct_polynomial(uint64_t degree, uint64_t s);
 uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, uint64_t x);
 
+// TODO: Abstract all of these away to a finite field arithmetic handler, and create operator overloads for these
+inline uint64_t add_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
+    return (x + y) % p;
+}
+
+inline uint64_t subtract_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
+    return (x - y) < 0 ? (x - y) + p : (x - y);
+}
+
+inline uint64_t multiply_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
+    return (x * y) % p;
+}
+
+uint64_t pow_ff(uint64_t base, uint64_t exp, const uint64_t p = PRIME_FF) {
+    // Borrowed from: https://stackoverflow.com/questions/8496182/calculating-powa-b-mod-n
+    base %= p;
+    uint64_t result = 1;
+    while (exp > 0) {
+        if (exp & 1) result = multiply_ff(result, base, p);
+        base = multiply_ff(base, base, p);
+        exp >>= 1;
+    }
+    return result;
+}
+
+// Finds the multiplicative inverse of x within the field characterized by p
+uint64_t multiplicative_inverse(const uint64_t x, const uint64_t p = PRIME_FF) {
+    // Don't need Euclid's Extended GCD algorithm since our field is characterized by p, which is prime
+    return pow_ff(x, p - 2);
+}
+
+uint64_t divide_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_FF) {
+    return multiply_ff(x, multiplicative_inverse(y, p));
+}
+
 // Share generation
 // Accept input n: num shares, t: threshold num shares (to decrypt), s: secret
 vector<pair<uint64_t, uint64_t>> generate_shares(const uint64_t n, const uint64_t t, const uint64_t s) {
@@ -62,37 +97,34 @@ uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     // Clever way to evaluate this while staying within the finite field:
     // result = a_0 + a_1*x + a_2*x^2 + ... ... mod p
     //        = a_0 + x( a_1 + x( a_2 + ... ... ) mod p ) mod p
-    // TODO: How is overflow handled? Perhaps should reduce _PRIME_FF to avoid some janky math that could cause bugs..?
     uint64_t result = 0;
-    for (size_t i = p_x.size(); i > 0; i--) {
-        result += p_x[i-1];
-        result *= x;
-        result %= PRIME_FF;
+    for (uint64_t coeff : p_x) {
+        result = multiply_ff(result, x);
+        result = add_ff(result, coeff);
     }
     return result;
 }
 
 // Lagrange Interpolation given k points, k >= t (the threshold), evaluated at x = 0. Assumes that points are distinct
-// TODO: Division mod by P, also multiplication overflow issues
 uint64_t lagrange_interpolate(const vector<pair<uint64_t, uint64_t>> &points, const uint64_t k) {
     uint64_t result = 0;
     uint64_t prod_num = 1;
     uint64_t prod_denom = 1;
     for (size_t i = 0; i < k; i++) {
-        prod_num *= points[i].first;
-        prod_num %= PRIME_FF;
+        prod_num = multiply_ff(prod_num, points[i].first);
     }
 
     for (size_t j = 0; j < k; j++) {
         uint64_t x_j = points[j].first;
-        uint64_t prod = prod_num / x_j;
+        uint64_t prod = divide_ff(prod_num, x_j);
         for (size_t m = 0; m < k; m++) {
             if (m == j) continue;
-            prod_denom *= (points[m].first - x_j);
-            prod_denom %= PRIME_FF;
+            // TODO: fix negative number bug, -1 != -1 mod p, it is uint64_t max - 1
+            prod_denom = multiply_ff(prod_denom,points[m].first - x_j);
         }
-        result += points[j].second * prod;
-        result %= PRIME_FF;
+        prod = divide_ff(prod, prod_denom);
+        prod = multiply_ff(prod, points[j].second);
+        result = add_ff(result, prod);
     }
     return result;
 }

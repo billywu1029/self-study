@@ -2,7 +2,7 @@
 // Created by bill on 7/21/20.
 // Implements Shamir's Secret Sharing scheme.
 // Polynomials will be organized such that p_x[0] is the n-1th degree coefficient, and p_x[-1] is the constant term
-// Also operates in a finite field characterized by 2^64 - 59 (largest 64 bit prime), for 64-bit security.
+// Also operates in a finite field characterized by 2^32 - 5 (largest 32 bit prime), for 32-bit security.
 //
 
 #include <iostream>
@@ -15,8 +15,8 @@
 
 using namespace std;
 
-// Trick to get 2^64 - 59 without pow or even bitshifting
-uint64_t PRIME_FF = -59;
+// Smallest prime < 2^32, this must be prime otherwise inv = x^(p-2) mod p wouldn't hold (Fermat's Little Theorem)
+uint64_t PRIME_FF = (1ULL << 32) - 5;
 
 vector<uint64_t> construct_polynomial(uint64_t degree, uint64_t s);
 uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, uint64_t x);
@@ -41,7 +41,7 @@ vector<pair<uint64_t, uint64_t>> generate_shares(const uint64_t n, const uint64_
 }
 
 // Construct polynomial
-// P(x) of degree t-1. Random coefficients, constant term is the secret s
+// P(x) of degree t-1. Random coefficients, constant term is the secret s, eg 2x^3 + x^2 + 10x + 420
 vector<uint64_t> construct_polynomial(const uint64_t degree, const uint64_t s) {
     vector<uint64_t> p_x;
     random_device rd;

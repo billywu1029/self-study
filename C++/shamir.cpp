@@ -60,6 +60,7 @@ uint64_t divide_ff(const uint64_t x, const uint64_t y, const uint64_t p = PRIME_
 
 // Share generation
 // Accept input n: num shares, t: threshold num shares (to decrypt), s: secret
+// n >= t, t >= 1, s < PRIME_FF
 vector<pair<uint64_t, uint64_t>> generate_shares(const uint64_t n, const uint64_t t, const uint64_t s) {
     assert(n >= t);
     vector<pair<uint64_t, uint64_t>> shares;
@@ -96,7 +97,7 @@ vector<uint64_t> construct_polynomial(const uint64_t degree, const uint64_t s) {
 }
 
 // Evaluate polynomial
-// Evaluate P(x) for some value x, P(x) assumed to be at least 2nd degree
+// Evaluate P(x) for some value x, P(x) assumed to be at least 2nd degree, 0 <= x < PRIME_FF
 uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     // Clever way to evaluate this while staying within the finite field:
     // result = a_0 + a_1*x + a_2*x^2 + ... ... mod p
@@ -109,8 +110,10 @@ uint64_t evaluate_polynomial(const vector<uint64_t> &p_x, const uint64_t x) {
     return result;
 }
 
-// Lagrange Interpolation given k points, k >= t (the threshold), evaluated at x = 0. Assumes that points are distinct
+// Lagrange Interpolation given k points, k >= t (the threshold), evaluated at x = 0. Assumes that points are distinct.
+// Assumes k >= 1, points must correspond to a valid polynomial and there must be a (# of points) >= polynomial's order.
 uint64_t lagrange_interpolate(const vector<pair<uint64_t, uint64_t>> &points, const uint64_t k) {
+    assert(points.size() >= k);
     uint64_t result = 0;
     uint64_t prod_num = 1;
     uint64_t prod_denom = 1;

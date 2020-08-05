@@ -34,6 +34,7 @@ inline uint64_t multiply_ff(const uint64_t x, const uint64_t y, const uint64_t p
     return (x * y) % p;
 }
 
+// Calculates (base ^ exp) mod p, p > base
 uint64_t pow_ff(uint64_t base, uint64_t exp, const uint64_t p = PRIME_FF) {
     // Borrowed from: https://stackoverflow.com/questions/8496182/calculating-powa-b-mod-n
     base %= p;
@@ -49,6 +50,7 @@ uint64_t pow_ff(uint64_t base, uint64_t exp, const uint64_t p = PRIME_FF) {
 // Finds the multiplicative inverse of x within the field characterized by p
 uint64_t multiplicative_inverse(const uint64_t x, const uint64_t p = PRIME_FF) {
     // Don't need Euclid's Extended GCD algorithm since our field is characterized by p, which is prime
+    // Can use Fermat's Little Theorem: x ^ (p - 1) = 1 mod p, corollary: (x ^ (p - 2)) * x = 1 mod p
     return pow_ff(x, p - 2);
 }
 

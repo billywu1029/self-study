@@ -1,22 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-#define MAX_NUM_ROWS 50
-#define MAX_NUM_COLS 50
+#include <inttypes.h>
+#include <string.h>
 
 typedef struct Matrix {
     int m, n;
-    int rows[MAX_NUM_ROWS];
-    int cols[MAX_NUM_COLS];
+    uint64_t rows;
+    uint64_t cols;
 } Matrix;
 
 void clear_matrix(Matrix* A) {
-    for (int i = 0; i < MAX_NUM_ROWS; i++) {
-        A->rows[i] = 0;
-    }
-    for (int j = 0; j < MAX_NUM_COLS; j++) {
-        A->cols[j] = 0;
-    }
+    A->rows = 0;
+    A->cols = 0;
 }
 
 void read_matrix(Matrix* A) {
@@ -26,23 +21,18 @@ void read_matrix(Matrix* A) {
             int x;
             scanf("%d", &x);
             // Don't care if redundant assignment
-            A->rows[i] |= x;
-            A->cols[j] |= x;
+            A->rows |= x << i;
+            A->cols |= x << (A->n - j - 1);
         }
     }
 }
 
 void print_matrix(Matrix* A) {
-    printf("Row marker array: \n");
-    for (int i = 0; i < A->m; i++) {
-        printf("%d ", A->rows[i]);
-    }
-    printf("\n");
-    printf("Column marker array: \n");
-    for (int j = 0; j < A->n; j++) {
-        printf("%d ", A->cols[j]); 
-    }
-    printf("\n");
+    // Usage of PRIx64 formatting to print the uint64_t
+    printf("Row marker bits: \n");
+    printf("%" PRIx64 "\n", A->rows);
+    printf("Column marker bits: \n");
+    printf("%" PRIx64 "\n", A->cols);
 }
 
 char* game_winner(Matrix* A) {
@@ -50,15 +40,14 @@ char* game_winner(Matrix* A) {
     // Assuming Ashish always goes first
     int turn = 1; // 1 if Ashish's turn, 0 if Vivek's
     while (1) {
-        int found_row = 0;
-        for (int i = 0; i < A->m; i++) {
-            // Find the first available row
+        int 
+        // *************************************
             if (!A->rows[i]) {
                 A->rows[i] = 1;
                 found_row = 1;
                 break;
             }
-        }
+        // *************************************
         if (!found_row) {
             return name[turn];
         }
@@ -87,8 +76,8 @@ int main() {
     for (int i = 0; i < num_matrices; i++) {
         clear_matrix(&matrix);
         read_matrix(&matrix);
-        // print_matrix(&matrix);
-        char* answer = game_winner(&matrix);
-        printf("%s\n", answer);
+        print_matrix(&matrix);
+        // char* answer = game_winner(&matrix);
+        // printf("%s\n", answer);
     }
 }

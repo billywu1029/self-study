@@ -55,22 +55,23 @@ def count_words(map_output: list) -> tuple:
 if __name__ == "__main__":
     # Testing file_to_words and count_words:
     input_filename = "mapreduce.in"
-    # results = file_to_words(input_filename)
-    # print(results)
-    # counts = {}
-    # for word, c in results:
-    #     if word not in counts:
-    #         counts[word] = [c]
-    #     else:
-    #         counts[word].append(c)
-    #
-    # reduce_results = []
-    # for word in counts:
-    #     reduce_results.append(count_words([word, counts[word]]))
-    # reduce_results.sort(key=lambda x: x[1], reverse=True)
-    # print(reduce_results)
+    results = file_to_words(input_filename)
+    print(results)
+    counts = {}
+    for word, c in results:
+        if word not in counts:
+            counts[word] = [c]
+        else:
+            counts[word].append(c)
+
+    reduce_results = []
+    for word in counts:
+        reduce_results.append(count_words([word, counts[word]]))
+    reduce_results.sort(key=lambda x: x[1], reverse=True)
+    print(reduce_results)
 
     mr = SimpleMapReduce(file_to_words, count_words)
     results = mr(input_filename)
     results.sort(key=lambda x: x[1], reverse=True)
     print(results)
+    print(reduce_results == results)
